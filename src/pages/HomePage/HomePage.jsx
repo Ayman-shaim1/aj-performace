@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import HeroSection from "./HeroSection";
 import AboutSection from "./AboutSection";
+import MyServicesSection from "./MyServicesSection";
 
 export default function HomePage({ onHeroInViewChange }) {
   const heroRef = useRef(null);
@@ -36,6 +37,7 @@ export default function HomePage({ onHeroInViewChange }) {
     <>
       <HeroSection sectionRef={heroRef} />
       <AboutSection />
+      <MyServicesSection />
     </>
   );
 }
