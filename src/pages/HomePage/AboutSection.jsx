@@ -29,8 +29,8 @@ const aboutHighlights = [
 
 export default function AboutSection() {
   return (
-    <Box as="section" bg="white" py={{ base: 16, md: 20 }}>
-      <Container maxW="6xl">
+    <Box as="section" id="about" bg="white" py={{ base: 16, md: 20 }}>
+      <Container maxW="6xl" px={{ base: 6, md: 0 }}>
         <Flex
           direction={{ base: "column", md: "row" }}
           align="stretch"
@@ -55,11 +55,11 @@ export default function AboutSection() {
               textAlign="justify"
               mb={6}
             >
-              Former national judo champion turned performance coach, I bring the
-              grit of the tatami and the science of sport together. I hold a Sports
-              Science Bachelor's from Complexe Moulay Abdellah and now serve as a
-              dedicated preparateur physique for competitive athletes who expect to
-              move, recover, and compete at their peak.
+              Former national judo champion turned performance coach, I bring
+              the grit of the tatami and the science of sport together. I hold a
+              Sports Science Bachelor's from Complexe Moulay Abdellah and now
+              serve as a dedicated preparateur physique for competitive athletes
+              who expect to move, recover, and compete at their peak.
             </Text>
 
             <SimpleGrid

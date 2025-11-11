@@ -14,13 +14,14 @@ export default function HeroSection({ sectionRef }) {
     <Box
       ref={sectionRef}
       as="section"
+      id="hero"
       bg="gray.900"
       minH="100vh"
       py={{ base: 20, md: 24 }}
       display="flex"
       alignItems="center"
     >
-      <Container maxW="5xl">
+      <Container maxW="5xl" px={{ base: 6, md: 0 }}>
         <Flex
           direction={{ base: "column", md: "row" }}
           align="center"

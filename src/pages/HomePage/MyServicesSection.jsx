@@ -52,8 +52,8 @@ const services = [
 
 export default function MyServicesSection() {
   return (
-    <Box as="section" bg="gray.50" py={{ base: 16, md: 20 }}>
-      <Container maxW="6xl">
+    <Box as="section" id="services" bg="gray.50" py={{ base: 16, md: 20 }}>
+      <Container maxW="6xl" px={{ base: 6, md: 0 }}>
         <Stack spacing={{ base: 10, md: 12 }} textAlign="center">
           <Stack spacing={3} maxW="3xl" mx="auto">
             <Heading size={{ base: "xl", md: "2xl" }} letterSpacing="tight">
@@ -85,7 +85,7 @@ export default function MyServicesSection() {
                   bg="white"
                   border="1px solid"
                   borderColor={isHighlight ? brandGold : "gray.200"}
-                  boxShadow={isHighlight ? "xl" : "md"}
+                  // boxShadow={isHighlight ? "xl" : "md"}
                   borderRadius="none"
                   p={{ base: 6, md: 8 }}
                   mr={1}
@@ -158,7 +158,7 @@ export default function MyServicesSection() {
                     <Button
                       size="md"
                       bg={isHighlight ? brandGold : "gray.900"}
-                      color={isHighlight ? "black" : "white"}
+                      color={"white"}
                       borderRadius="none"
                       px={8}
                       whiteSpace="nowrap"

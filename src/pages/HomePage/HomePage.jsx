@@ -2,6 +2,10 @@ import { useEffect, useRef } from "react";
 import HeroSection from "./HeroSection";
 import AboutSection from "./AboutSection";
 import MyServicesSection from "./MyServicesSection";
+import ContactMeSection from "./ContactMeSection";
+import FooterSection from "./FooterSection";
+import { Icon } from "@chakra-ui/react";
+import { FiMenu } from "react-icons/fi";
 
 export default function HomePage({ onHeroInViewChange }) {
   const heroRef = useRef(null);
@@ -38,6 +42,8 @@ export default function HomePage({ onHeroInViewChange }) {
       <HeroSection sectionRef={heroRef} />
       <AboutSection />
       <MyServicesSection />
+      <ContactMeSection />
+      <FooterSection />
     </>
   );
 }
