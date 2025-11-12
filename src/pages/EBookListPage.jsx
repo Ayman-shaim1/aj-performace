@@ -2,6 +2,7 @@ import {
   Badge,
   Box,
   Button,
+  chakra,
   CloseButton,
   Container,
   Flex,
@@ -14,6 +15,7 @@ import {
   Text,
   VStack,
 } from "@chakra-ui/react";
+import { Link as RouterLink } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
 import { brandGold } from "../theme/colors";
@@ -97,17 +99,36 @@ export default function EBookListPage() {
   return (
     <Box as="section" bg="white" py={{ base: 12, md: 20 }}>
       <Container maxW="6xl" px={{ base: 6, md: 0 }}>
+        <Button
+          as={RouterLink}
+          to="/"
+          alignSelf={{ base: "stretch", md: "flex-start" }}
+          borderRadius="none"
+          bg="gray.900"
+          color="white"
+          _hover={{ bg: "gray.700" }}
+          size="sm"
+          px={5}
+          mb={10}
+        >
+          ← Back to Home
+        </Button>
         <Stack spacing={{ base: 10, md: 14 }}>
           <Stack spacing={3} textAlign={{ base: "center", md: "left" }}>
             <Heading size={{ base: "2xl", md: "3xl" }} letterSpacing="tight">
-              AJ Performance E-Book Library
-              <Box
-                width={{ base: "full", md: "32" }}
-                height="3px"
-                display="block"
-                bg={brandGold}
-                mt={2}
-              />
+              <chakra.span
+                display="inline-flex"
+                flexDirection="column"
+                alignItems={{ base: "center", md: "flex-start" }}
+              >
+                AJ Performance E-Book Library
+                <Box
+                  height="3px"
+                  width="100%"
+                  bg={brandGold}
+                  mt={2}
+                />
+              </chakra.span>
             </Heading>
             <Text
               color="gray.600"
@@ -120,6 +141,19 @@ export default function EBookListPage() {
               matches your current season and keep stacking wins.
             </Text>
           </Stack>
+
+          <Box
+            bg="gray.100"
+            color="gray.600"
+            borderRadius="none"
+            py={{ base: 3, md: 4 }}
+            px={{ base: 4, md: 6 }}
+            textAlign="center"
+            fontWeight="semibold"
+            letterSpacing="wide"
+          >
+            Tap any e-book card to explore details and purchase.
+          </Box>
 
           <Grid
             templateColumns={{ base: "1fr", lg: "280px 1fr" }}
@@ -188,71 +222,51 @@ export default function EBookListPage() {
             <GridItem>
               <SimpleGrid
                 columns={{ base: 1, md: 2, lg: 3 }}
-                columnGap={{ base: 6, md: 8, lg: 10 }}
-                rowGap={{ base: 8, md: 10, lg: 12 }}
+                spacing={{ base: 8, md: 10, lg: 12 }}
               >
                 {ebooks.map((book) => (
                   <Stack
                     key={book.title}
-                    h="100%"
                     border="1px solid"
                     borderColor="gray.200"
                     bg="white"
                     borderRadius="none"
-                    boxShadow="lg"
-                    spacing={0}
+                    boxShadow="md"
+                    overflow="hidden"
                     transition="transform 0.2s ease, box-shadow 0.2s ease"
                     _hover={{ transform: "translateY(-6px)", boxShadow: "xl" }}
-                    cursor="pointer"
                     onClick={() => handleOpenModal(book)}
-                    overflow="hidden"
-                    position="relative"
+                    cursor="pointer"
                     role="group"
                   >
-                    <Box position="relative" overflow="hidden">
+                    <Box position="relative">
                       <Image
                         src={book.cover}
                         alt={book.title}
                         w="full"
-                        h={{ base: "280px", md: "300px", lg: "320px" }}
+                        h={{ base: "240px", md: "260px", lg: "280px" }}
                         objectFit="cover"
                         transition="transform 0.3s ease"
-                        _groupHover={{ transform: "scale(1.05)" }}
+                        _groupHover={{ transform: "scale(1.02)" }}
                       />
                       <Badge
                         position="absolute"
                         top={4}
-                        left={4}
-                        bg="blackAlpha.700"
+                        right={4}
+                        bg="blackAlpha.800"
                         color="white"
                         borderRadius="full"
                         px={3}
                         py={1}
                         fontSize="xs"
+                        letterSpacing="widest"
                       >
                         ${book.price}
                       </Badge>
                     </Box>
 
-                    <Box
-                      position="absolute"
-                      inset={0}
-                      bgGradient="linear(to-t, blackAlpha.700, transparent 55%)"
-                      color="white"
-                      display="flex"
-                      flexDirection="column"
-                      justifyContent="flex-end"
-                      p={{ base: 5, md: 6 }}
-                      pointerEvents="none"
-                      opacity={0}
-                      transform="translateY(12px)"
-                      transition="opacity 0.2s ease, transform 0.2s ease"
-                      _groupHover={{ opacity: 1, transform: "translateY(0)" }}
-                    >
+                    <Stack spacing={4} p={{ base: 5, md: 6 }}>
                       <Stack spacing={2} align="flex-start">
-                        <Heading size="md" color="white">
-                          {book.title}
-                        </Heading>
                         <Badge
                           bg={brandGold}
                           color="white"
@@ -265,8 +279,11 @@ export default function EBookListPage() {
                         >
                           {book.category}
                         </Badge>
+                        <Heading size="md" color="gray.800">
+                          {book.title}
+                        </Heading>
                       </Stack>
-                    </Box>
+                    </Stack>
                   </Stack>
                 ))}
               </SimpleGrid>
@@ -324,19 +341,19 @@ export default function EBookListPage() {
                   <Heading size="lg" color="gray.900">
                     {selectedBook.title}
                   </Heading>
-                      <Badge
-                        alignSelf="flex-start"
-                        bg={brandGold}
-                        color="white"
-                        borderRadius="none"
-                        px={3}
-                        py={1}
-                        fontSize="xs"
-                        textTransform="uppercase"
-                        letterSpacing="widest"
-                      >
-                        {selectedBook.category}
-                      </Badge>
+                  <Badge
+                    alignSelf="flex-start"
+                    bg={brandGold}
+                    color="white"
+                    borderRadius="none"
+                    px={3}
+                    py={1}
+                    fontSize="xs"
+                    textTransform="uppercase"
+                    letterSpacing="widest"
+                  >
+                    {selectedBook.category}
+                  </Badge>
                 </Stack>
                 <Image
                   src={selectedBook.cover}

@@ -27,9 +27,7 @@ const MotionBox = motion(Box);
 
 export default function NavBar({ isHeroInView = true }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
-  const [activeSection, setActiveSection] = React.useState(
-    navLinks[0].sectionId
-  );
+  const [activeSection, setActiveSection] = React.useState(null);
   const openMobileMenu = React.useCallback(() => setIsMobileMenuOpen(true), []);
   const closeMobileMenu = React.useCallback(
     () => setIsMobileMenuOpen(false),
@@ -78,9 +76,7 @@ export default function NavBar({ isHeroInView = true }) {
         return scrollPosition >= sectionTop && scrollPosition < sectionBottom;
       });
 
-      setActiveSection(
-        active?.id ?? sectionElements[sectionElements.length - 1].id
-      );
+      setActiveSection(active?.id ?? null);
     };
 
     let ticking = false;
