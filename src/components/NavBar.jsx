@@ -12,12 +12,13 @@ import {
   Stack,
   Icon,
 } from "@chakra-ui/react";
+import { Link as RouterLink } from "react-router-dom";
 import { FiMenu } from "react-icons/fi";
 import { AnimatePresence, motion } from "framer-motion";
 import { brandGold } from "../theme/colors";
 
 const navLinks = [
-  { label: "Home", href: "#hero", sectionId: "hero" },
+  //   { label: "Home", href: "#hero", sectionId: "hero" },
   { label: "About Me", href: "#about", sectionId: "about" },
   { label: "My Services", href: "#services", sectionId: "services" },
   { label: "Contact", href: "#contact", sectionId: "contact" },
@@ -68,25 +69,18 @@ export default function NavBar({ isHeroInView = true }) {
     const updateActiveSection = () => {
       const header = document.querySelector("header");
       const headerOffset = header?.offsetHeight ?? 0;
-      const targetLine =
-        window.scrollY + headerOffset + window.innerHeight * 0.6;
+      const scrollPosition = window.scrollY + headerOffset;
 
-      let currentId = sectionElements[0].id;
+      const active = sectionElements.find((section) => {
+        const sectionTop = section.offsetTop - window.innerHeight * 0.45;
+        const sectionBottom =
+          section.offsetTop + section.offsetHeight - window.innerHeight * 0.45;
+        return scrollPosition >= sectionTop && scrollPosition < sectionBottom;
+      });
 
-      for (const section of sectionElements) {
-        const sectionTop = section.offsetTop;
-        const sectionBottom = sectionTop + section.offsetHeight;
-
-        if (targetLine >= sectionTop && targetLine < sectionBottom) {
-          currentId = section.id;
-          break;
-        }
-        if (targetLine >= sectionBottom) {
-          currentId = section.id;
-        }
-      }
-
-      setActiveSection(currentId);
+      setActiveSection(
+        active?.id ?? sectionElements[sectionElements.length - 1].id
+      );
     };
 
     let ticking = false;
@@ -226,6 +220,8 @@ export default function NavBar({ isHeroInView = true }) {
           })}
 
           <Button
+            as={RouterLink}
+            to="/e-books"
             borderRadius="none"
             size="sm"
             bg={brandGold}
@@ -367,6 +363,8 @@ export default function NavBar({ isHeroInView = true }) {
               </Stack>
               <Box mt="auto">
                 <Button
+                  as={RouterLink}
+                  to="/e-books"
                   borderRadius="none"
                   size="md"
                   width="full"
