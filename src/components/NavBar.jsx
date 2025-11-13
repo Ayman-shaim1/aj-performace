@@ -222,6 +222,7 @@ export default function NavBar({ isHeroInView = true }) {
             size="sm"
             bg={brandGold}
             _hover={{ bg: brandGold, opacity: 0.85 }}
+            color="white"
           >
             Check My E-Books
           </Button>
@@ -365,9 +366,9 @@ export default function NavBar({ isHeroInView = true }) {
                   size="md"
                   width="full"
                   bg={brandGold}
-                  color="gray.900"
                   _hover={{ bg: brandGold, opacity: 0.85 }}
                   onClick={closeMobileMenu}
+                  color="white"
                 >
                   Check My E-Books
                 </Button>

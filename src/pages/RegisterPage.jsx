@@ -1,14 +1,24 @@
 import { useState } from "react";
-import { Box, Button, Container, Heading, Stack, Text } from "@chakra-ui/react";
+import {
+  Box,
+  Button,
+  Container,
+  Heading,
+  Stack,
+  Text,
+} from "@chakra-ui/react";
 import { Link as RouterLink } from "react-router-dom";
-import { BsGoogle } from "react-icons/bs";
 import InputText from "../components/InputText";
 import { brandGold } from "../theme/colors";
+import { BsGoogle } from "react-icons/bs";
 
-export default function LoginPage() {
+export default function RegisterPage() {
   const [formValues, setFormValues] = useState({
+    fullName: "",
     email: "",
+    phone: "",
     password: "",
+    confirmPassword: "",
   });
 
   const handleChange = (event) => {
@@ -21,7 +31,7 @@ export default function LoginPage() {
 
   const handleSubmit = (event) => {
     event.preventDefault();
-    // Authentication logic will be integrated later.
+    // Registration logic will be integrated later.
   };
 
   return (
@@ -43,16 +53,25 @@ export default function LoginPage() {
           <Stack spacing={6} as="form" onSubmit={handleSubmit}>
             <Stack spacing={2} textAlign="center">
               <Heading size="xl" color="gray.900">
-                Welcome Back
+                Create Your Account
               </Heading>
               <Text color="gray.600">
-                Sign in with your credentials to access your dashboard.
+                Sign up to unlock personalized training programs and more.
               </Text>
             </Stack>
 
             <Stack spacing={4}>
               <InputText
-                id="login-email"
+                id="register-full-name"
+                name="fullName"
+                label="Full Name"
+                placeholder="Your name"
+                value={formValues.fullName}
+                onChange={handleChange}
+                isRequired
+              />
+              <InputText
+                id="register-email"
                 name="email"
                 label="Email"
                 type="email"
@@ -62,12 +81,31 @@ export default function LoginPage() {
                 isRequired
               />
               <InputText
-                id="login-password"
+                id="register-phone"
+                name="phone"
+                label="Phone Number"
+                placeholder="+212 600 000 000"
+                value={formValues.phone}
+                onChange={handleChange}
+                isRequired
+              />
+              <InputText
+                id="register-password"
                 name="password"
                 label="Password"
                 type="password"
-                placeholder="Enter your password"
+                placeholder="Create a password"
                 value={formValues.password}
+                onChange={handleChange}
+                isRequired
+              />
+              <InputText
+                id="register-confirm-password"
+                name="confirmPassword"
+                label="Confirm Password"
+                type="password"
+                placeholder="Re-enter your password"
+                value={formValues.confirmPassword}
                 onChange={handleChange}
                 isRequired
               />
@@ -81,7 +119,7 @@ export default function LoginPage() {
                 color="white"
                 _hover={{ bg: brandGold, opacity: 0.85 }}
               >
-                Sign In
+                Create Account
               </Button>
               <Button
                 leftIcon={<BsGoogle />}
@@ -98,15 +136,15 @@ export default function LoginPage() {
             </Stack>
 
             <Text fontSize="sm" color="gray.500" textAlign="center">
-              Don&apos;t have an account?{" "}
+              Already have an account?{" "}
               <Button
                 as={RouterLink}
-                to="/register"
+                to="/login"
                 variant="link"
                 color={brandGold}
                 px={1}
               >
-                Create one
+                Sign in
               </Button>
             </Text>
           </Stack>

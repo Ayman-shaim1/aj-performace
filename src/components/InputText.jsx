@@ -9,6 +9,8 @@ export default function InputText({
   isRequired = false,
   isTextarea = false,
   name,
+  w,
+  ...fieldProps
 }) {
   return (
     <Box w="full">
@@ -33,10 +35,13 @@ export default function InputText({
           focusBorderColor={brandGold}
           minH="8rem"
           required={isRequired}
+          w={w}
           _focus={{
             borderColor: brandGold,
-            boxShadow: `0 0 4px 1px ${brandGold}`,
+            boxShadow: `0 0 7px 1px ${brandGold}`,
+            transition: "box-shadow 0.2s ease, border-color 0.2s ease",
           }}
+          {...fieldProps}
         />
       ) : (
         <Input
@@ -47,11 +52,14 @@ export default function InputText({
           borderRadius="none"
           focusBorderColor={brandGold}
           required={isRequired}
+          w={w}
           _focus={{
             borderSize: "1px",
             borderColor: brandGold,
-            boxShadow: `0 0 7px 0 ${brandGold}`,
+            boxShadow: `0 0 7px 1px ${brandGold}`,
+            transition: "box-shadow 0.2s ease, border-color 0.2s ease",
           }}
+          {...fieldProps}
         />
       )}
     </Box>
