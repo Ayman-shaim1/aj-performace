@@ -16,6 +16,7 @@ import { brandGold } from "../theme/colors";
 import { login, loginWithGoogle } from "../services/authService";
 import { useAuth } from "../hooks/useAuth";
 import { showErrorToast } from "../utils/toast";
+import { buildUrl } from "../utils/url";
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -96,8 +97,8 @@ export default function LoginPage() {
   };
 
   const handleGoogleLogin = () => {
-    const successUrl = `${import.meta.env.VITE_APP_URL}/e-books`;
-    const failureUrl = `${import.meta.env.VITE_APP_URL}/login`;
+    const successUrl = buildUrl("/e-books");
+    const failureUrl = buildUrl("/login");
     loginWithGoogle(successUrl, failureUrl);
   };
 

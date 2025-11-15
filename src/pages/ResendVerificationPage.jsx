@@ -15,6 +15,7 @@ import InputText from "../components/InputText";
 import { brandGold } from "../theme/colors";
 import { showErrorToast, showSuccessToast } from "../utils/toast";
 import { login, sendVerificationEmail } from "../services/authService";
+import { buildUrl } from "../utils/url";
 
 export default function ResendVerificationPage() {
   const navigate = useNavigate();
@@ -71,7 +72,7 @@ export default function ResendVerificationPage() {
       await login(formValues.email, formValues.password);
       
       // Send verification email
-      const verificationUrl = `${import.meta.env.VITE_APP_URL}/verify-email`;
+      const verificationUrl = buildUrl("/verify-email");
       await sendVerificationEmail(verificationUrl);
       
       showSuccessToast(

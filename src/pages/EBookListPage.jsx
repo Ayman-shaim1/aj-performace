@@ -39,8 +39,8 @@ import {
   logout as logoutService,
 } from "../services/authService";
 import { account } from "../config/appwrite";
-
 import { useAuth } from "../hooks/useAuth";
+import { buildUrl } from "../utils/url";
 
 // Static list of categories displayed in the sidebar filter summary.
 const categories = [
@@ -180,11 +180,6 @@ export default function EBookListPage() {
     checkAndCreateUserDocument();
   }, []);
 
-
-  useEffect(() => {
-    console.log("[DEBUG APP URL] -> ", import.meta.env.VITE_APP_URL);
-  }, []);
-
   // Open the modal with the chosen book context.
   const handleOpenModal = (book) => {
     setSelectedBook(book);
@@ -207,8 +202,8 @@ export default function EBookListPage() {
   };
 
   const handleGoogleLogin = () => {
-    const successUrl = `${import.meta.env.VITE_APP_URL}/e-books`;
-    const failureUrl = `${import.meta.env.VITE_APP_URL}/login`;
+    const successUrl = buildUrl("/e-books");
+    const failureUrl = buildUrl("/login");
     loginWithGoogle(successUrl, failureUrl);
   };
 

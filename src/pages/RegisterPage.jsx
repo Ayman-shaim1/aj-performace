@@ -16,6 +16,7 @@ import { FiAlertCircle } from "react-icons/fi";
 import { register, loginWithGoogle } from "../services/authService";
 import { useAuth } from "../hooks/useAuth";
 import { showErrorToast, showSuccessToast } from "../utils/toast";
+import { buildUrl } from "../utils/url";
 
 export default function RegisterPage() {
   const navigate = useNavigate();
@@ -117,8 +118,8 @@ export default function RegisterPage() {
   };
 
   const handleGoogleLogin = () => {
-    const successUrl = `${import.meta.env.VITE_APP_URL}/e-books`;
-    const failureUrl = `${import.meta.env.VITE_APP_URL}/register`;
+    const successUrl = buildUrl("/e-books");
+    const failureUrl = buildUrl("/register");
     loginWithGoogle(successUrl, failureUrl);
   };
 

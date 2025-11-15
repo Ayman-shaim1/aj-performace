@@ -16,6 +16,7 @@ import { showErrorToast, showSuccessToast } from "../utils/toast";
 import { sendVerificationEmail } from "../services/authService";
 import { login } from "../services/authService";
 import { useState } from "react";
+import { buildUrl } from "../utils/url";
 
 export default function EmailConfirmationPage() {
   const navigate = useNavigate();
@@ -50,24 +51,23 @@ export default function EmailConfirmationPage() {
 
     setIsResending(true);
     try {
-      // For resending, we need to prompt user for password or redirect to login
-      // Since we don't have password stored, redirect to a page where they can enter it
-      // Or better: create a dedicated resend page
-      showErrorToast(
+      const verificationUrl = buildUrl("/verify-email");
+      await sendVerificationEmail(verificationUrl);
+      showSuccessToast(
         "",
-        "Please log in first to resend verification email, or register again.",
-        { position: "top-center", duration: 5000 }
+        "Verification email sent! Please check your inbox.",
+        { position: "top-center" }
       );
-      // Redirect to login after a delay
-      setTimeout(() => {
-        navigate("/login");
-      }, 2000);
     } catch (error) {
       showErrorToast(
         "",
-        error.message || "Failed to resend verification email.",
+        error.message || "Failed to resend verification email. Please log in to resend.",
         { position: "top-center" }
       );
+      // Redirect to login after a delay if email sending fails
+      setTimeout(() => {
+        navigate("/login");
+      }, 2000);
     } finally {
       setIsResending(false);
     }

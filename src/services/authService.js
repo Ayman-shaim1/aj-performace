@@ -1,4 +1,5 @@
 import { account, databases } from "../config/appwrite";
+import { buildUrl } from "../utils/url";
 
 /**
  * Login with email and password
@@ -47,17 +48,13 @@ export const login = async (email, password) => {
  * @param {string} failureUrl - URL to redirect on failure
  */
 export const loginWithGoogle = (successUrl, failureUrl) => {
-  console.log("[DEBUG SUCCESS URL in 'authService.js'] -> ", successUrl);
-  console.log("[DEBUG FAILURE URL in 'authService.js'] -> ", failureUrl);
-  setTimeout(() => {
-    try {
-      account.createOAuth2Session("google", successUrl, failureUrl);
-    } catch (error) {
-      throw new Error(
-        error?.message || "Unable to sign in with Google. Please try again."
-      );
-    }
-  }, 1000);
+  try {
+    account.createOAuth2Session("google", successUrl, failureUrl);
+  } catch (error) {
+    throw new Error(
+      error?.message || "Unable to sign in with Google. Please try again."
+    );
+  }
 };
 
 /**
