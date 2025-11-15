@@ -202,6 +202,7 @@ export default function EBookListPage() {
   };
 
   const handleGoogleLogin = () => {
+    console.log("[DEBUG APP URL] -> ", import.meta.env.VITE_APP_URL);
     const successUrl = `${import.meta.env.VITE_APP_URL}/e-books`;
     const failureUrl = `${import.meta.env.VITE_APP_URL}/login`;
     loginWithGoogle(successUrl, failureUrl);
