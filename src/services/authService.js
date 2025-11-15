@@ -12,10 +12,10 @@ export const login = async (email, password) => {
   try {
     // First, try to create a session
     const session = await account.createEmailPasswordSession(email, password);
-    
+
     // Check if user email is verified
     const user = await account.get();
-    
+
     if (!user.emailVerification) {
       // Delete the session since email is not verified
       try {
@@ -27,7 +27,7 @@ export const login = async (email, password) => {
         "Your account is not verified. Please check your email and verify your account before logging in."
       );
     }
-    
+
     return session;
   } catch (error) {
     // If it's already our custom error, throw it
@@ -35,7 +35,8 @@ export const login = async (email, password) => {
       throw error;
     }
     throw new Error(
-      error?.message || "Unable to sign in with these credentials. Please try again."
+      error?.message ||
+        "Unable to sign in with these credentials. Please try again."
     );
   }
 };
@@ -46,13 +47,17 @@ export const login = async (email, password) => {
  * @param {string} failureUrl - URL to redirect on failure
  */
 export const loginWithGoogle = (successUrl, failureUrl) => {
-  try {
-    account.createOAuth2Session("google", successUrl, failureUrl);
-  } catch (error) {
-    throw new Error(
-      error?.message || "Unable to sign in with Google. Please try again."
-    );
-  }
+  console.log("[DEBUG SUCCESS URL in 'authService.js'] -> ", successUrl);
+  console.log("[DEBUG FAILURE URL in 'authService.js'] -> ", failureUrl);
+  setTimeout(() => {
+    try {
+      account.createOAuth2Session("google", successUrl, failureUrl);
+    } catch (error) {
+      throw new Error(
+        error?.message || "Unable to sign in with Google. Please try again."
+      );
+    }
+  }, 1000);
 };
 
 /**
@@ -65,9 +70,7 @@ export const logout = async () => {
     await account.deleteSession("current");
     return true;
   } catch (error) {
-    throw new Error(
-      error?.message || "Unable to sign out. Please try again."
-    );
+    throw new Error(error?.message || "Unable to sign out. Please try again.");
   }
 };
 
@@ -104,14 +107,9 @@ export const ensureUserDocument = async (authMethod = "simple") => {
       // If document exists but doesn't have authMethod, update it
       if (!existingDoc.authMethod) {
         try {
-          await databases.updateDocument(
-            databaseId,
-            collectionId,
-            user.$id,
-            {
-              authMethod: authMethod,
-            }
-          );
+          await databases.updateDocument(databaseId, collectionId, user.$id, {
+            authMethod: authMethod,
+          });
           // Refresh the document to get updated data
           return await databases.getDocument(
             databaseId,
@@ -135,7 +133,7 @@ export const ensureUserDocument = async (authMethod = "simple") => {
           phoneNumber: user.phone || "", // Required field (collection uses phoneNumber, not phone)
           authMethod: authMethod,
         };
-        
+
         const newDoc = await databases.createDocument(
           databaseId,
           collectionId,
@@ -182,7 +180,8 @@ export const verifyEmail = async (userId, secret) => {
     return true;
   } catch (error) {
     throw new Error(
-      error?.message || "Email verification failed. The link may be invalid or expired."
+      error?.message ||
+        "Email verification failed. The link may be invalid or expired."
     );
   }
 };
@@ -262,4 +261,3 @@ export const register = async ({ email, password, fullName, phone }) => {
     );
   }
 };
-
