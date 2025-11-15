@@ -7,6 +7,7 @@ import {
   SimpleGrid,
   Stack,
   Text,
+  chakra,
 } from "@chakra-ui/react";
 import { brandGold } from "../../theme/colors";
 
@@ -57,7 +58,14 @@ export default function MyServicesSection() {
         <Stack spacing={{ base: 10, md: 12 }} textAlign="center">
           <Stack spacing={3} maxW="3xl" mx="auto">
             <Heading size={{ base: "xl", md: "2xl" }} letterSpacing="tight">
-              Programs Built for High Performance
+              <chakra.span
+                display="inline-flex"
+                flexDirection="column"
+                alignItems="center"
+              >
+                Programs Built for High Performance
+                <Box height="3px" width="100%" bg={brandGold} mt={2} />
+              </chakra.span>
             </Heading>
             <Text
               color="gray.600"

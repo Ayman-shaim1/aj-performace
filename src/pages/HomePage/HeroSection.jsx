@@ -6,6 +6,7 @@ import {
   Heading,
   Stack,
   Text,
+  chakra,
 } from "@chakra-ui/react";
 import { brandGold } from "../../theme/colors";
 
@@ -52,8 +53,14 @@ export default function HeroSection({ sectionRef }) {
             gap={6}
           >
             <Heading as="h1" size="3xl" color="white" letterSpacing="tight">
-              Level up with AJ Performance
-              <Box width="100%" height="3px" display="block" bg={brandGold} />
+              <chakra.span
+                display="inline-flex"
+                flexDirection="column"
+                alignItems={{ base: "center", md: "flex-start" }}
+              >
+                Level up with AJ Performance
+                <Box height="3px" width="100%" bg={brandGold} mt={2} />
+              </chakra.span>
             </Heading>
             <Text color="whiteAlpha.800" fontSize={{ base: "lg", md: "xl" }}>
               Book your next coaching session or dive into our curated e-book

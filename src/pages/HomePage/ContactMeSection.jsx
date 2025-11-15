@@ -7,6 +7,7 @@ import {
   Stack,
   Text,
   VStack,
+  chakra,
 } from "@chakra-ui/react";
 import InputText from "../../components/InputText";
 import { brandGold } from "../../theme/colors";
@@ -28,8 +29,14 @@ export default function ContactMeSection() {
             align={{ base: "center", lg: "flex-start" }}
           >
             <Heading size="2xl" letterSpacing="tight">
-              Let’s Elevate Your Performance
-              <Box width="100%" height="3px" display="block" bg={brandGold} />
+              <chakra.span
+                display="inline-flex"
+                flexDirection="column"
+                alignItems={{ base: "center", lg: "flex-start" }}
+              >
+                Let's Elevate Your Performance
+                <Box height="3px" width="100%" bg={brandGold} mt={2} />
+              </chakra.span>
             </Heading>
             <Text color="gray.800" fontSize={{ base: "md", md: "lg" }}>
               Ready to build explosive power, sharpen your conditioning, and

@@ -5,6 +5,9 @@ import HomePage from "./pages/HomePage/HomePage";
 import EBookListPage from "./pages/EBookListPage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
+import EmailConfirmationPage from "./pages/EmailConfirmationPage";
+import VerifyEmailPage from "./pages/VerifyEmailPage";
+import ResendVerificationPage from "./pages/ResendVerificationPage";
 import { client } from "./config/appwrite"; 
 
 function AppContent() {
@@ -32,6 +35,9 @@ function AppContent() {
         <Route path="/e-books" element={<EBookListPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/email-confirmation" element={<EmailConfirmationPage />} />
+        <Route path="/verify-email" element={<VerifyEmailPage />} />
+        <Route path="/resend-verification" element={<ResendVerificationPage />} />
       </Routes>
     </>
   );

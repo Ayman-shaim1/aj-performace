@@ -21,6 +21,9 @@ const navLinks = [
   //   { label: "Home", href: "#hero", sectionId: "hero" },
   { label: "About Me", href: "#about", sectionId: "about" },
   { label: "My Services", href: "#services", sectionId: "services" },
+  { label: "E-Books", href: "#ebooks-preview", sectionId: "ebooks-preview" },
+  { label: "Testimonials", href: "#testimonials", sectionId: "testimonials" },
+  { label: "FAQ", href: "#faq", sectionId: "faq" },
   { label: "Contact", href: "#contact", sectionId: "contact" },
 ];
 const MotionBox = motion(Box);
@@ -67,16 +70,50 @@ export default function NavBar({ isHeroInView = true }) {
     const updateActiveSection = () => {
       const header = document.querySelector("header");
       const headerOffset = header?.offsetHeight ?? 0;
-      const scrollPosition = window.scrollY + headerOffset;
+      const scrollPosition = window.scrollY + headerOffset + 100; // Add offset for better detection
 
-      const active = sectionElements.find((section) => {
-        const sectionTop = section.offsetTop - window.innerHeight * 0.45;
-        const sectionBottom =
-          section.offsetTop + section.offsetHeight - window.innerHeight * 0.45;
-        return scrollPosition >= sectionTop && scrollPosition < sectionBottom;
+      // Find the section that is currently most visible in the viewport
+      let activeSection = null;
+      let maxVisible = 0;
+
+      sectionElements.forEach((section) => {
+        const rect = section.getBoundingClientRect();
+        const sectionTop = rect.top + window.scrollY;
+        const sectionBottom = sectionTop + rect.height;
+        
+        // Calculate how much of the section is visible
+        const viewportTop = window.scrollY;
+        const viewportBottom = window.scrollY + window.innerHeight;
+        
+        const visibleTop = Math.max(sectionTop, viewportTop);
+        const visibleBottom = Math.min(sectionBottom, viewportBottom);
+        const visibleHeight = Math.max(0, visibleBottom - visibleTop);
+        
+        // Check if section is in the viewport and has significant visibility
+        if (visibleHeight > 0 && scrollPosition >= sectionTop - 200 && scrollPosition < sectionBottom) {
+          if (visibleHeight > maxVisible) {
+            maxVisible = visibleHeight;
+            activeSection = section.id;
+          }
+        }
       });
 
-      setActiveSection(active?.id ?? null);
+      // Fallback: if no section is significantly visible, find the one closest to the top
+      if (!activeSection && sectionElements.length > 0) {
+        const sortedSections = [...sectionElements].sort((a, b) => {
+          const aTop = a.getBoundingClientRect().top + window.scrollY;
+          const bTop = b.getBoundingClientRect().top + window.scrollY;
+          return Math.abs(scrollPosition - aTop) - Math.abs(scrollPosition - bTop);
+        });
+        
+        const closest = sortedSections[0];
+        const closestTop = closest.getBoundingClientRect().top + window.scrollY;
+        if (scrollPosition >= closestTop - 300) {
+          activeSection = closest.id;
+        }
+      }
+
+      setActiveSection(activeSection);
     };
 
     let ticking = false;

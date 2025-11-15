@@ -23,15 +23,24 @@ import {
   DialogBody,
   DialogCloseTrigger,
   DialogPositioner,
+  Spinner,
 } from "@chakra-ui/react";
 import { Link as RouterLink } from "react-router-dom";
-import { FiArrowLeft, FiLogIn } from "react-icons/fi";
-import { useState } from "react";
+import { FiArrowLeft, FiLogIn, FiAlertCircle, FiLogOut } from "react-icons/fi";
+import { useState, useEffect } from "react";
 import { brandGold } from "../theme/colors";
 import InputText from "../components/InputText";
+import EBookItem from "../components/EBookItem";
 import { BsGoogle } from "react-icons/bs";
+import {
+  login,
+  loginWithGoogle,
+  ensureUserDocument,
+  logout as logoutService,
+} from "../services/authService";
 import { account } from "../config/appwrite";
-import { BiLogIn } from "react-icons/bi";
+
+import { useAuth } from "../hooks/useAuth";
 
 // Static list of categories displayed in the sidebar filter summary.
 const categories = [
@@ -110,8 +119,66 @@ export default function EBookListPage() {
     email: "",
     password: "",
   });
-  const [loginError, setLoginError] = useState("");
+  const [loginErrors, setLoginErrors] = useState({});
+  const [loginServerError, setLoginServerError] = useState("");
   const [isSubmittingLogin, setIsSubmittingLogin] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const { currentUser, checkAuth } = useAuth();
+
+  // Check if user just logged in via OAuth and ensure user document exists
+  // This page is the OAuth success redirect URL, so we ensure user document with authMethod: 'google'
+  useEffect(() => {
+    const checkAndCreateUserDocument = async (retryCount = 0) => {
+      const maxRetries = 3;
+      const delay = 500;
+
+      // Add a delay to ensure OAuth session is fully established
+      await new Promise((resolve) => setTimeout(resolve, delay));
+
+      try {
+        // Check if there's an active session
+        const user = await account.get();
+
+        if (user && user.$id) {
+          // Update auth state via hook
+          checkAuth();
+          // Since this page is the OAuth success URL, ensure document exists with authMethod: 'google'
+          // If document already exists with 'simple', it will keep that (won't overwrite)
+          // If document doesn't exist, create it with 'google'
+          try {
+            await ensureUserDocument("google");
+            return; // Success, exit
+          } catch (error) {
+            // Retry if we haven't exceeded max retries
+            if (retryCount < maxRetries) {
+              setTimeout(
+                () => checkAndCreateUserDocument(retryCount + 1),
+                delay * 2
+              );
+            }
+          }
+        } else {
+          // User not found yet, retry if we haven't exceeded max retries
+          if (retryCount < maxRetries) {
+            setTimeout(
+              () => checkAndCreateUserDocument(retryCount + 1),
+              delay * 2
+            );
+          }
+        }
+      } catch (error) {
+        // Error getting user, retry if we haven't exceeded max retries
+        if (retryCount < maxRetries) {
+          setTimeout(
+            () => checkAndCreateUserDocument(retryCount + 1),
+            delay * 2
+          );
+        }
+      }
+    };
+
+    checkAndCreateUserDocument();
+  }, []);
 
   // Open the modal with the chosen book context.
   const handleOpenModal = (book) => {
@@ -123,14 +190,6 @@ export default function EBookListPage() {
     setSelectedBook(null);
   };
 
-  const loginWithGoogle = () => {
-    account.createOAuth2Session(
-      "google",
-      "http://localhost:5173/e-books", // success redirect
-      "http://localhost:5173/login" // failure redirect
-    );
-  };
-
   const handleOpenLoginModal = () => {
     setIsLoginModalOpen(true);
   };
@@ -138,7 +197,14 @@ export default function EBookListPage() {
   const handleCloseLoginModal = () => {
     setIsLoginModalOpen(false);
     setLoginForm({ email: "", password: "" });
-    setLoginError("");
+    setLoginErrors({});
+    setLoginServerError("");
+  };
+
+  const handleGoogleLogin = () => {
+    const successUrl = `${import.meta.env.VITE_APP_URL}/e-books`;
+    const failureUrl = `${import.meta.env.VITE_APP_URL}/login`;
+    loginWithGoogle(successUrl, failureUrl);
   };
 
   const handleLoginInputChange = (event) => {
@@ -147,26 +213,67 @@ export default function EBookListPage() {
       ...previous,
       [name]: value,
     }));
+    // Clear field error when user types
+    if (loginErrors[name]) {
+      setLoginErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
+    }
+    // Clear server error when user types
+    if (loginServerError) setLoginServerError("");
+  };
+
+  const validateLoginForm = () => {
+    const newErrors = {};
+    if (!loginForm.email) {
+      newErrors.email = "Email is required";
+    } else if (!/\S+@\S+\.\S+/.test(loginForm.email)) {
+      newErrors.email = "Please enter a valid email address";
+    }
+    if (!loginForm.password) {
+      newErrors.password = "Password is required";
+    }
+    setLoginErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleLoginSubmit = async (event) => {
     event.preventDefault();
-    setLoginError("");
+    setLoginErrors({});
+    setLoginServerError("");
+
+    // Client-side validation
+    if (!validateLoginForm()) {
+      return;
+    }
+
+    // Set loading state immediately
     setIsSubmittingLogin(true);
     try {
-      await account.createEmailPasswordSession(
-        loginForm.email,
-        loginForm.password
-      );
+      await login(loginForm.email, loginForm.password);
+      // Refresh user state after successful login
+      checkAuth();
       handleCloseLoginModal();
+      // Note: Don't set isSubmittingLogin to false here since modal is closing
     } catch (error) {
-      setLoginError(
-        error?.message ||
-          "Unable to sign in with these credentials. Please try again."
-      );
-    } finally {
-      setIsSubmittingLogin(false);
+      setLoginServerError(error.message);
+      setIsSubmittingLogin(false); // Stop loading on error
     }
+  };
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      await logoutService();
+      // Refresh auth state after logout
+      checkAuth();
+    } catch (error) {
+      // Handle logout error silently or show notification
+      setIsLoggingOut(false); // Stop loading on error
+    }
+    // Note: Don't set isLoggingOut to false here on success since user state will change
   };
 
   return (
@@ -189,19 +296,57 @@ export default function EBookListPage() {
             <FiArrowLeft color="white" /> Back to Home
           </Button>
 
-          <Button
-            borderRadius="none"
-            bg="white"
-            border="1px solid"
-            borderColor="gray.200"
-            px={5}
-            mb={10}
-            color="black"
-            _hover={{ bg: "gray.100" }}
-            onClick={handleOpenLoginModal}
-          >
-            <FiLogIn color="black" /> Authenticate
-          </Button>
+          {currentUser ? (
+            <Flex align="center" gap={3} mb={10}>
+              <Text
+                fontSize="md"
+                fontWeight="semibold"
+                color="gray.500"
+                px={5}
+                py={2}
+                textTransform="uppercase"
+              >
+                Welcome, {currentUser.name || currentUser.email} !
+              </Text>
+              <Button
+                borderRadius="none"
+                bg="gray.900"
+                color="white"
+                size="sm"
+                px={4}
+                _hover={{ bg: "gray.700" }}
+                onClick={handleLogout}
+                isDisabled={isLoggingOut}
+                position="relative"
+              >
+                {isLoggingOut ? (
+                  <Stack direction="row" spacing={2} align="center">
+                    <Spinner size="sm" color="white" thickness="2px" />
+                    <Text>Logging out...</Text>
+                  </Stack>
+                ) : (
+                  <>
+                    <FiLogOut style={{ marginRight: "8px" }} />
+                    Logout
+                  </>
+                )}
+              </Button>
+            </Flex>
+          ) : (
+            <Button
+              borderRadius="none"
+              bg="white"
+              border="1px solid"
+              borderColor="gray.200"
+              px={5}
+              mb={10}
+              color="black"
+              _hover={{ bg: "gray.100" }}
+              onClick={handleOpenLoginModal}
+            >
+              <FiLogIn color="black" /> Authenticate
+            </Button>
+          )}
         </Flex>
         <Stack spacing={{ base: 10, md: 14 }}>
           <Stack spacing={3} textAlign={{ base: "center", md: "left" }}>
@@ -327,81 +472,11 @@ export default function EBookListPage() {
                 columnGap={{ base: 2, md: 2, lg: 2 }}
               >
                 {ebooks.map((book) => (
-                  <Stack
+                  <EBookItem
                     key={book.title}
-                    border="1px solid"
-                    borderColor="gray.200"
-                    bg="white"
-                    borderRadius="none"
-                    boxShadow="md"
-                    overflow="hidden"
-                    transition="transform 0.2s ease, box-shadow 0.2s ease"
-                    _hover={{ transform: "translateY(-6px)", boxShadow: "xl" }}
+                    book={book}
                     onClick={() => handleOpenModal(book)}
-                    cursor="pointer"
-                    role="group"
-                  >
-                    <Box position="relative">
-                      {/* Cover art with hover animation */}
-                      <Image
-                        src={book.cover}
-                        alt={book.title}
-                        w="full"
-                        h={{ base: "380px", md: "360px", lg: "360px" }}
-                        objectFit="cover"
-                        transition="transform 0.3s ease"
-                        _groupHover={{ transform: "scale(1.02)" }}
-                      />
-                      <Badge
-                        position="absolute"
-                        top={4}
-                        right={4}
-                        bg="blackAlpha.800"
-                        color="white"
-                        borderRadius="full"
-                        px={3}
-                        py={1}
-                        fontSize="xs"
-                        letterSpacing="widest"
-                      >
-                        ${book.price}
-                      </Badge>
-                      <Box
-                        position="absolute"
-                        left="50%"
-                        transform="translateX(-50%)"
-                        bottom={4}
-                        width="calc(100% - 32px)"
-                        bg="blackAlpha.200"
-                        backdropFilter="blur(12px)"
-                        border="1px solid"
-                        borderColor="whiteAlpha.300"
-                        borderRadius="sm"
-                        px={4}
-                        py={3}
-                        color="white"
-                        textAlign="left"
-                      >
-                        {/* Category + title glass overlay */}
-                        <Badge
-                          bg={brandGold}
-                          color="white"
-                          borderRadius="none"
-                          px={3}
-                          py={1}
-                          fontSize="xs"
-                          textTransform="uppercase"
-                          letterSpacing="widest"
-                          mb={2}
-                        >
-                          {book.category}
-                        </Badge>
-                        <Heading size="sm" color="white">
-                          {book.title}
-                        </Heading>
-                      </Box>
-                    </Box>
-                  </Stack>
+                  />
                 ))}
               </SimpleGrid>
 
@@ -436,147 +511,171 @@ export default function EBookListPage() {
         </Stack>
       </Container>
 
-      <DialogRoot
-        open={isLoginModalOpen}
-        onOpenChange={({ open }) => {
-          if (!open) {
-            handleCloseLoginModal();
-          }
-        }}
-      >
-        <DialogBackdrop bg="blackAlpha.700" />
-        <DialogPositioner
-          display="flex"
-          alignItems="center"
-          justifyContent="center"
-          px={4}
+      {!currentUser && (
+        <DialogRoot
+          open={isLoginModalOpen}
+          onOpenChange={({ open }) => {
+            if (!open) {
+              handleCloseLoginModal();
+            }
+          }}
         >
-          <DialogContent
-            bg="white"
-            borderRadius="none"
-            maxW="lg"
-            w="full"
-            position="relative"
+          <DialogBackdrop bg="blackAlpha.700" />
+          <DialogPositioner
+            display="flex"
+            alignItems="center"
+            justifyContent="center"
+            px={4}
           >
-            <DialogCloseTrigger asChild>
-              <CloseButton
-                borderRadius="full"
-                position="absolute"
-                top={4}
-                right={4}
-              />
-            </DialogCloseTrigger>
-            <DialogBody p={{ base: 6, md: 8 }}>
-              <Stack spacing={6} as="form" onSubmit={handleLoginSubmit}>
-                <Stack spacing={3} textAlign="center">
-                  <Heading size="lg" color="gray.900">
-                    Authenticate to Continue
-                  </Heading>
-                  <Text color="gray.600">
-                    Sign in with your credentials to manage your e-book
-                    purchases.
-                  </Text>
-                </Stack>
-
-                <Stack spacing={4}>
-                  <FieldRoot required>
-                    <FieldLabel
-                      fontSize="sm"
-                      textTransform="uppercase"
-                      letterSpacing="widest"
-                    >
-                      Email
-                    </FieldLabel>
-                    <InputText
-                      id="login-email"
-                      name="email"
-                      type="email"
-                      placeholder="you@example.com"
-                      value={loginForm.email}
-                      onChange={handleLoginInputChange}
-                    />
-                  </FieldRoot>
-                  <FieldRoot required>
-                    <FieldLabel
-                      fontSize="sm"
-                      textTransform="uppercase"
-                      letterSpacing="widest"
-                    >
-                      Password
-                    </FieldLabel>
-                    <InputText
-                      id="login-password"
-                      name="password"
-                      type="password"
-                      placeholder="Enter your password"
-                      value={loginForm.password}
-                      onChange={handleLoginInputChange}
-                    />
-                  </FieldRoot>
-                  {loginError && (
-                    <Text color="red.500" fontSize="sm">
-                      {loginError}
+            <DialogContent
+              bg="white"
+              borderRadius="none"
+              maxW="lg"
+              w="full"
+              position="relative"
+            >
+              <DialogCloseTrigger asChild>
+                <CloseButton
+                  borderRadius="full"
+                  position="absolute"
+                  top={4}
+                  right={4}
+                />
+              </DialogCloseTrigger>
+              <DialogBody p={{ base: 6, md: 8 }}>
+                <Stack spacing={6} as="form" onSubmit={handleLoginSubmit}>
+                  <Stack spacing={3} textAlign="center">
+                    <Heading size="lg" color="gray.900">
+                      Authenticate to Continue
+                    </Heading>
+                    <Text color="gray.600">
+                      Sign in with your credentials to manage your e-book
+                      purchases.
                     </Text>
-                  )}
-                </Stack>
+                  </Stack>
 
-                <Stack spacing={3}>
-                  <Button
-                    type="submit"
-                    borderRadius="none"
-                    bg={brandGold}
-                    color="white"
-                    _hover={{ bg: brandGold, opacity: 0.85 }}
-                    isLoading={isSubmittingLogin}
-                    loadingText="Signing in"
-                  >
-                    Sign In
-                  </Button>
-                  <Button
-                    leftIcon={<BsGoogle />}
-                    borderRadius="none"
-                    bg="white"
-                    border="1px solid"
-                    borderColor="gray.200"
-                    color="black"
-                    _hover={{ bg: "gray.50" }}
-                    onClick={loginWithGoogle}
-                    isDisabled={isSubmittingLogin}
-                  >
-                    Continue with Google
-                  </Button>
-                </Stack>
-                <Stack spacing={1} textAlign="center">
-                  <Text fontSize="sm" color="gray.500">
-                    Having trouble?{" "}
-                    <Button
-                      variant="link"
-                      color={brandGold}
-                      onClick={handleCloseLoginModal}
-                      px={1}
+                  {loginServerError && (
+                    <Box
+                      bg="red.50"
+                      border="1px solid"
+                      borderColor="red.200"
+                      borderRadius="none"
+                      p={4}
+                      display="flex"
+                      alignItems="flex-start"
+                      gap={3}
                     >
-                      Contact support
-                    </Button>
-                  </Text>
-                  <Text fontSize="sm" color="gray.500">
-                    Don&apos;t have an account?{" "}
+                      <Box color="red.500" fontSize="xl" mt={0.5}>
+                        <FiAlertCircle />
+                      </Box>
+                      <Box flex="1">
+                        <Text fontWeight="bold" color="red.800" mb={1}>
+                          Error!
+                        </Text>
+                        <Text color="red.700" fontSize="sm">
+                          {loginServerError}
+                        </Text>
+                      </Box>
+                    </Box>
+                  )}
+
+                  <Stack spacing={4}>
+                    <Box>
+                      <FieldRoot required>
+                        <FieldLabel
+                          fontSize="sm"
+                          textTransform="uppercase"
+                          letterSpacing="widest"
+                        >
+                          Email
+                        </FieldLabel>
+                        <InputText
+                          id="login-email"
+                          name="email"
+                          type="email"
+                          placeholder="you@example.com"
+                          value={loginForm.email}
+                          onChange={handleLoginInputChange}
+                          error={loginErrors.email}
+                        />
+                      </FieldRoot>
+                    </Box>
+                    <Box>
+                      <FieldRoot required>
+                        <FieldLabel
+                          fontSize="sm"
+                          textTransform="uppercase"
+                          letterSpacing="widest"
+                        >
+                          Password
+                        </FieldLabel>
+                        <InputText
+                          id="login-password"
+                          name="password"
+                          type="password"
+                          placeholder="Enter your password"
+                          value={loginForm.password}
+                          onChange={handleLoginInputChange}
+                          error={loginErrors.password}
+                        />
+                      </FieldRoot>
+                    </Box>
+                  </Stack>
+
+                  <Stack spacing={3}>
                     <Button
-                      as={RouterLink}
-                      to="/register"
-                      variant="link"
-                      color={brandGold}
-                      onClick={handleCloseLoginModal}
-                      px={1}
+                      type="submit"
+                      borderRadius="none"
+                      bg={brandGold}
+                      color="white"
+                      _hover={{ bg: brandGold, opacity: 0.85 }}
+                      isDisabled={isSubmittingLogin}
+                      position="relative"
                     >
-                      Create one
+                      {isSubmittingLogin ? (
+                        <Stack direction="row" spacing={2} align="center">
+                          <Spinner size="sm" color="white" thickness="2px" />
+                          <Text>Signing in...</Text>
+                        </Stack>
+                      ) : (
+                        "Sign In"
+                      )}
                     </Button>
-                  </Text>
+                    <Button
+                      leftIcon={<BsGoogle />}
+                      borderRadius="none"
+                      bg="white"
+                      border="1px solid"
+                      borderColor="gray.200"
+                      color="black"
+                      _hover={{ bg: "gray.50" }}
+                      onClick={handleGoogleLogin}
+                      isDisabled={isSubmittingLogin}
+                    >
+                      Continue with Google
+                    </Button>
+                  </Stack>
+                  <Stack spacing={1} textAlign="center">
+                    <Text fontSize="sm" color="gray.500">
+                      Don&apos;t have an account?{" "}
+                      <Button
+                        as={RouterLink}
+                        to="/register"
+                        variant="link"
+                        color={brandGold}
+                        onClick={handleCloseLoginModal}
+                        px={1}
+                      >
+                        Create one
+                      </Button>
+                    </Text>
+                  </Stack>
                 </Stack>
-              </Stack>
-            </DialogBody>
-          </DialogContent>
-        </DialogPositioner>
-      </DialogRoot>
+              </DialogBody>
+            </DialogContent>
+          </DialogPositioner>
+        </DialogRoot>
+      )}
 
       <DialogRoot
         open={Boolean(selectedBook)}

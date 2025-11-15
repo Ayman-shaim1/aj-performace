@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   Box,
   Button,
@@ -6,32 +6,18 @@ import {
   Heading,
   Stack,
   Text,
-  Spinner,
+  VStack,
 } from "@chakra-ui/react";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
-import { BsGoogle } from "react-icons/bs";
+import { FiMail, FiArrowLeft } from "react-icons/fi";
 import { FiAlertCircle } from "react-icons/fi";
 import InputText from "../components/InputText";
 import { brandGold } from "../theme/colors";
-import { login, loginWithGoogle } from "../services/authService";
-import { useAuth } from "../hooks/useAuth";
-import { showErrorToast } from "../utils/toast";
+import { showErrorToast, showSuccessToast } from "../utils/toast";
+import { login, sendVerificationEmail } from "../services/authService";
 
-export default function LoginPage() {
+export default function ResendVerificationPage() {
   const navigate = useNavigate();
-  const { currentUser } = useAuth();
-
-  // Redirect if already authenticated
-  useEffect(() => {
-    if (currentUser) {
-      showErrorToast(
-        "",
-        "You are already logged in. Redirecting to e-books...",
-        { position: "top-center" }
-      );
-      navigate("/e-books");
-    }
-  }, [currentUser, navigate]);
   const [formValues, setFormValues] = useState({
     email: "",
     password: "",
@@ -46,7 +32,6 @@ export default function LoginPage() {
       ...prev,
       [name]: value,
     }));
-    // Clear field error when user types
     if (errors[name]) {
       setErrors((prev) => {
         const newErrors = { ...prev };
@@ -54,7 +39,6 @@ export default function LoginPage() {
         return newErrors;
       });
     }
-    // Clear server error when user types
     if (serverError) setServerError("");
   };
 
@@ -77,28 +61,37 @@ export default function LoginPage() {
     setErrors({});
     setServerError("");
 
-    // Client-side validation
     if (!validateForm()) {
       return;
     }
 
-    // Set loading state immediately
     setIsSubmitting(true);
     try {
+      // Login first to create a session
       await login(formValues.email, formValues.password);
-      // Navigate to e-books page on success
-      navigate("/e-books");
+      
+      // Send verification email
+      const verificationUrl = `${import.meta.env.VITE_APP_URL}/verify-email`;
+      await sendVerificationEmail(verificationUrl);
+      
+      showSuccessToast(
+        "",
+        "Verification email sent! Please check your inbox.",
+        { position: "top-center" }
+      );
+      
+      // Redirect to email confirmation page
+      navigate(`/email-confirmation?email=${encodeURIComponent(formValues.email)}`);
     } catch (err) {
       setServerError(err.message);
-      setIsSubmitting(false); // Stop loading on error
+      showErrorToast(
+        "",
+        err.message || "Failed to resend verification email.",
+        { position: "top-center" }
+      );
+    } finally {
+      setIsSubmitting(false);
     }
-    // Note: Don't set isSubmitting to false here on success since we're navigating
-  };
-
-  const handleGoogleLogin = () => {
-    const successUrl = `${import.meta.env.VITE_APP_URL}/e-books`;
-    const failureUrl = `${import.meta.env.VITE_APP_URL}/login`;
-    loginWithGoogle(successUrl, failureUrl);
   };
 
   return (
@@ -117,13 +110,24 @@ export default function LoginPage() {
           borderRadius="none"
           p={{ base: 6, md: 10 }}
         >
-          <Stack spacing={6} as="form" onSubmit={handleSubmit}>
+          <VStack spacing={6} as="form" onSubmit={handleSubmit}>
+            <Box
+              bg={`${brandGold}20`}
+              borderRadius="full"
+              p={6}
+              display="flex"
+              alignItems="center"
+              justifyContent="center"
+            >
+              <FiMail size={48} color={brandGold} />
+            </Box>
+
             <Stack spacing={2} textAlign="center">
               <Heading size="xl" color="gray.900">
-                Welcome Back
+                Resend Verification Email
               </Heading>
               <Text color="gray.600">
-                Sign in with your credentials to access your dashboard.
+                Enter your credentials to receive a new verification email.
               </Text>
             </Stack>
 
@@ -137,6 +141,7 @@ export default function LoginPage() {
                 display="flex"
                 alignItems="flex-start"
                 gap={3}
+                w="full"
               >
                 <Box color="red.500" fontSize="xl" mt={0.5}>
                   <FiAlertCircle />
@@ -152,9 +157,9 @@ export default function LoginPage() {
               </Box>
             )}
 
-            <Stack spacing={4}>
+            <VStack spacing={4} w="full">
               <InputText
-                id="login-email"
+                id="resend-email"
                 name="email"
                 label="Email"
                 type="email"
@@ -165,7 +170,7 @@ export default function LoginPage() {
                 isRequired
               />
               <InputText
-                id="login-password"
+                id="resend-password"
                 name="password"
                 label="Password"
                 type="password"
@@ -175,58 +180,37 @@ export default function LoginPage() {
                 error={errors.password}
                 isRequired
               />
-            </Stack>
+            </VStack>
 
-            <Stack spacing={3}>
+            <VStack spacing={3} w="full">
               <Button
                 type="submit"
                 borderRadius="none"
                 bg={brandGold}
                 color="white"
                 _hover={{ bg: brandGold, opacity: 0.85 }}
-                isDisabled={isSubmitting}
-                position="relative"
+                isLoading={isSubmitting}
+                loadingText="Sending..."
+                w="full"
               >
-                {isSubmitting ? (
-                  <Stack direction="row" spacing={2} align="center">
-                    <Spinner size="sm" color="white" thickness="2px" />
-                    <Text>Signing in...</Text>
-                  </Stack>
-                ) : (
-                  "Sign In"
-                )}
+                Send Verification Email
               </Button>
-              <Button
-                leftIcon={<BsGoogle />}
-                borderRadius="none"
-                bg="white"
-                border="1px solid"
-                borderColor="gray.200"
-                color="black"
-                _hover={{ bg: "gray.50" }}
-                type="button"
-                onClick={handleGoogleLogin}
-                isDisabled={isSubmitting}
-              >
-                Continue with Google
-              </Button>
-            </Stack>
 
-            <Text fontSize="sm" color="gray.500" textAlign="center">
-              Don&apos;t have an account?{" "}
               <Button
                 as={RouterLink}
-                to="/register"
-                variant="link"
-                color={brandGold}
-                px={1}
+                to="/login"
+                variant="ghost"
+                color="gray.600"
+                _hover={{ bg: "gray.50" }}
+                leftIcon={<FiArrowLeft />}
               >
-                Create one
+                Back to Login
               </Button>
-            </Text>
-          </Stack>
+            </VStack>
+          </VStack>
         </Box>
       </Container>
     </Box>
   );
 }
+

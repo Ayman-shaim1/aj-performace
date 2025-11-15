@@ -10,6 +10,7 @@ export default function InputText({
   isTextarea = false,
   name,
   w,
+  error,
   ...fieldProps
 }) {
   return (
@@ -32,13 +33,16 @@ export default function InputText({
           name={name ?? id}
           placeholder={placeholder}
           borderRadius="none"
-          focusBorderColor={brandGold}
+          focusBorderColor={error ? "red.500" : brandGold}
+          borderColor={error ? "red.300" : undefined}
           minH="8rem"
           required={isRequired}
           w={w}
           _focus={{
-            borderColor: brandGold,
-            boxShadow: `0 0 7px 1px ${brandGold}`,
+            borderColor: error ? "red.500" : brandGold,
+            boxShadow: error
+              ? `0 0 7px 1px rgba(229, 62, 62, 0.5)`
+              : `0 0 7px 1px ${brandGold}`,
             transition: "box-shadow 0.2s ease, border-color 0.2s ease",
           }}
           {...fieldProps}
@@ -50,17 +54,25 @@ export default function InputText({
           type={type}
           placeholder={placeholder}
           borderRadius="none"
-          focusBorderColor={brandGold}
+          focusBorderColor={error ? "red.500" : brandGold}
+          borderColor={error ? "red.300" : undefined}
           required={isRequired}
           w={w}
           _focus={{
             borderSize: "1px",
-            borderColor: brandGold,
-            boxShadow: `0 0 7px 1px ${brandGold}`,
+            borderColor: error ? "red.500" : brandGold,
+            boxShadow: error
+              ? `0 0 7px 1px rgba(229, 62, 62, 0.5)`
+              : `0 0 7px 1px ${brandGold}`,
             transition: "box-shadow 0.2s ease, border-color 0.2s ease",
           }}
           {...fieldProps}
         />
+      )}
+      {error && (
+        <Text color="red.500" fontSize="xs" mt={1} ml={1}>
+          {error}
+        </Text>
       )}
     </Box>
   );

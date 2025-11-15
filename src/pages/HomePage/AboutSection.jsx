@@ -6,6 +6,7 @@ import {
   SimpleGrid,
   Stack,
   Text,
+  chakra,
 } from "@chakra-ui/react";
 import { brandGold } from "../../theme/colors";
 
@@ -44,8 +45,14 @@ export default function AboutSection() {
             w="full"
           >
             <Heading as="h1" size="3xl" letterSpacing="tight">
-              About Coach Ayoub
-              <Box width="100%" height="3px" display="block" bg={brandGold} />
+              <chakra.span
+                display="inline-flex"
+                flexDirection="column"
+                alignItems={{ base: "center", md: "flex-start" }}
+              >
+                About Coach Ayoub
+                <Box height="3px" width="100%" bg={brandGold} mt={2} />
+              </chakra.span>
             </Heading>
 
             <Text

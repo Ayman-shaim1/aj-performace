@@ -1,7 +1,11 @@
 import { useEffect, useRef } from "react";
 import HeroSection from "./HeroSection";
+import ResultsStatsSection from "./ResultsStatsSection";
 import AboutSection from "./AboutSection";
 import MyServicesSection from "./MyServicesSection";
+import EBooksPreviewSection from "./EBooksPreviewSection";
+import TestimonialsSection from "./TestimonialsSection";
+import FAQSection from "./FAQSection";
 import ContactMeSection from "./ContactMeSection";
 import FooterSection from "./FooterSection";
 import { Icon } from "@chakra-ui/react";
@@ -40,8 +44,12 @@ export default function HomePage({ onHeroInViewChange }) {
   return (
     <>
       <HeroSection sectionRef={heroRef} />
+      <ResultsStatsSection />
       <AboutSection />
       <MyServicesSection />
+      <EBooksPreviewSection />
+      <TestimonialsSection />
+      <FAQSection />
       <ContactMeSection />
       <FooterSection />
     </>
