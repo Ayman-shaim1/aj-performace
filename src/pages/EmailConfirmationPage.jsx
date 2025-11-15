@@ -12,19 +12,13 @@ import { Link as RouterLink, useNavigate, useSearchParams } from "react-router-d
 import { FiMail, FiArrowLeft } from "react-icons/fi";
 import { brandGold } from "../theme/colors";
 import { useAuth } from "../hooks/useAuth";
-import { showErrorToast, showSuccessToast } from "../utils/toast";
-import { sendVerificationEmail } from "../services/authService";
-import { login } from "../services/authService";
-import { useState } from "react";
-import { buildUrl } from "../utils/url";
+import { showErrorToast } from "../utils/toast";
 
 export default function EmailConfirmationPage() {
   const navigate = useNavigate();
   const { currentUser } = useAuth();
   const [searchParams] = useSearchParams();
   const email = searchParams.get("email");
-  const password = searchParams.get("password"); // Store password temporarily for resend
-  const [isResending, setIsResending] = useState(false);
 
   // Redirect if already authenticated and verified
   useEffect(() => {
@@ -37,41 +31,6 @@ export default function EmailConfirmationPage() {
       navigate("/e-books");
     }
   }, [currentUser, navigate]);
-
-  const handleResendEmail = async () => {
-    if (!email) {
-      showErrorToast(
-        "",
-        "Email address is required. Please register again.",
-        { position: "top-center" }
-      );
-      navigate("/register");
-      return;
-    }
-
-    setIsResending(true);
-    try {
-      const verificationUrl = buildUrl("/verify-email");
-      await sendVerificationEmail(verificationUrl);
-      showSuccessToast(
-        "",
-        "Verification email sent! Please check your inbox.",
-        { position: "top-center" }
-      );
-    } catch (error) {
-      showErrorToast(
-        "",
-        error.message || "Failed to resend verification email. Please log in to resend.",
-        { position: "top-center" }
-      );
-      // Redirect to login after a delay if email sending fails
-      setTimeout(() => {
-        navigate("/login");
-      }, 2000);
-    } finally {
-      setIsResending(false);
-    }
-  };
 
   return (
     <Box

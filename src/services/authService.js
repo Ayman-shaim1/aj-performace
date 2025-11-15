@@ -235,7 +235,7 @@ export const register = async ({ email, password, fullName, phone }) => {
     }
 
     // Step 5: Send verification email (requires session)
-    const verificationUrl = `${import.meta.env.VITE_APP_URL}/verify-email`;
+    const verificationUrl = buildUrl("/verify-email");
     try {
       await sendVerificationEmail(verificationUrl);
     } catch (verificationError) {

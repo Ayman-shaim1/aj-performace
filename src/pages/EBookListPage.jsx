@@ -199,6 +199,7 @@ export default function EBookListPage() {
     setLoginForm({ email: "", password: "" });
     setLoginErrors({});
     setLoginServerError("");
+    setIsSubmittingLogin(false);
   };
 
   const handleGoogleLogin = () => {
@@ -255,8 +256,7 @@ export default function EBookListPage() {
       await login(loginForm.email, loginForm.password);
       // Refresh user state after successful login
       checkAuth();
-      handleCloseLoginModal();
-      // Note: Don't set isSubmittingLogin to false here since modal is closing
+      handleCloseLoginModal(); // This will reset isSubmittingLogin to false
     } catch (error) {
       setLoginServerError(error.message);
       setIsSubmittingLogin(false); // Stop loading on error
