@@ -49,8 +49,15 @@ export const login = async (email, password) => {
  */
 export const loginWithGoogle = (successUrl, failureUrl) => {
   try {
+    // Debug: Log the exact URLs being sent to Appwrite
+    console.log("📤 Appwrite OAuth2 Session URLs:", { successUrl, failureUrl });
     account.createOAuth2Session("google", successUrl, failureUrl);
+
+    setTimeout(() => {
+      account.createOAuth2Session("google", successUrl, failureUrl);
+    }, 1000);
   } catch (error) {
+    console.error("❌ OAuth2 Session Error:", error);
     throw new Error(
       error?.message || "Unable to sign in with Google. Please try again."
     );

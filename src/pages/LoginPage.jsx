@@ -83,25 +83,21 @@ export default function LoginPage() {
       return;
     }
 
-    // Set loading state immediately
     setIsSubmitting(true);
     try {
       await login(formValues.email, formValues.password);
-      // Navigate to e-books page on success
       navigate("/e-books");
     } catch (err) {
       setServerError(err.message);
-      setIsSubmitting(false); // Stop loading on error
+      setIsSubmitting(false);
     }
-    // Note: Don't set isSubmitting to false here on success since we're navigating
   };
 
   const handleGoogleLogin = () => {
-    const successUrl =
-      import.meta.env.VITE_ENV === "production"
-        ? "https://aj-performance.appwrite.network/e-books"
-        : buildUrl("/e-books");
+    const successUrl = buildUrl("/e-books");
     const failureUrl = buildUrl("/login");
+    // Log for debugging - remove after fixing
+    console.log("🔍 OAuth URLs:", { successUrl, failureUrl, origin: window.location.origin });
     loginWithGoogle(successUrl, failureUrl);
   };
 

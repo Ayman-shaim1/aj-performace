@@ -118,11 +118,11 @@ export default function RegisterPage() {
   };
 
   const handleGoogleLogin = () => {
-    const successUrl =
-      import.meta.env.VITE_ENV === "production"
-        ? "https://aj-performance.appwrite.network/e-books"
-        : buildUrl("/e-books");
+    const successUrl = buildUrl("/e-books");
     const failureUrl = buildUrl("/register");
+    // Debug: Log URLs to verify they match Appwrite configuration
+    console.log("OAuth Success URL:", successUrl);
+    console.log("OAuth Failure URL:", failureUrl);
     loginWithGoogle(successUrl, failureUrl);
   };
 
