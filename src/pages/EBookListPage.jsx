@@ -203,7 +203,10 @@ export default function EBookListPage() {
   };
 
   const handleGoogleLogin = () => {
-    const successUrl = buildUrl("/e-books");
+    const successUrl =
+      import.meta.env.VITE_ENV === "production"
+        ? "https://aj-performance.appwrite.network/e-book"
+        : buildUrl("/e-books");
     const failureUrl = buildUrl("/login");
     loginWithGoogle(successUrl, failureUrl);
   };
