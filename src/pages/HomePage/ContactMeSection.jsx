@@ -74,7 +74,6 @@ export default function ContactMeSection() {
               p={{ base: 6, md: 8 }}
               border="1px solid"
               borderColor="gray.200"
-              boxShadow="md"
               borderRadius="none"
             >
               <InputText

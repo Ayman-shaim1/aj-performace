@@ -70,19 +70,21 @@ export default function ResendVerificationPage() {
     try {
       // Login first to create a session
       await login(formValues.email, formValues.password);
-      
+
       // Send verification email
       const verificationUrl = buildUrl("/verify-email");
       await sendVerificationEmail(verificationUrl);
-      
+
       showSuccessToast(
         "",
         "Verification email sent! Please check your inbox.",
         { position: "top-center" }
       );
-      
+
       // Redirect to email confirmation page
-      navigate(`/email-confirmation?email=${encodeURIComponent(formValues.email)}`);
+      navigate(
+        `/email-confirmation?email=${encodeURIComponent(formValues.email)}`
+      );
     } catch (err) {
       setServerError(err.message);
       showErrorToast(
@@ -214,4 +216,3 @@ export default function ResendVerificationPage() {
     </Box>
   );
 }
-

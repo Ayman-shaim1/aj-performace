@@ -9,7 +9,11 @@ import {
   VStack,
   Spinner,
 } from "@chakra-ui/react";
-import { Link as RouterLink, useNavigate, useSearchParams } from "react-router-dom";
+import {
+  Link as RouterLink,
+  useNavigate,
+  useSearchParams,
+} from "react-router-dom";
 import { FiCheckCircle, FiXCircle, FiArrowLeft } from "react-icons/fi";
 import { brandGold } from "../theme/colors";
 import { verifyEmail } from "../services/authService";
@@ -49,7 +53,8 @@ export default function VerifyEmailPage() {
         setStatus("error");
         showErrorToast(
           "",
-          error.message || "Email verification failed. The link may be invalid or expired.",
+          error.message ||
+            "Email verification failed. The link may be invalid or expired.",
           { position: "top-center" }
         );
       }
@@ -106,7 +111,8 @@ export default function VerifyEmailPage() {
                     Email Verified!
                   </Heading>
                   <Text color="gray.600" fontSize="md">
-                    Your email has been successfully verified. You will be redirected to the login page shortly.
+                    Your email has been successfully verified. You will be
+                    redirected to the login page shortly.
                   </Text>
                 </Stack>
                 <Button
@@ -140,7 +146,8 @@ export default function VerifyEmailPage() {
                     Verification Failed
                   </Heading>
                   <Text color="gray.600" fontSize="md">
-                    The verification link is invalid or has expired. Please request a new verification email.
+                    The verification link is invalid or has expired. Please
+                    request a new verification email.
                   </Text>
                 </Stack>
                 <VStack spacing={3} w="full">
@@ -174,4 +181,3 @@ export default function VerifyEmailPage() {
     </Box>
   );
 }
-
