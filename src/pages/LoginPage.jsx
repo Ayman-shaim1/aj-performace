@@ -99,7 +99,7 @@ export default function LoginPage() {
   const handleGoogleLogin = () => {
     const successUrl =
       import.meta.env.VITE_ENV === "production"
-        ? "https://aj-performance.appwrite.network/e-book"
+        ? "https://aj-performance.appwrite.network/e-books"
         : buildUrl("/e-books");
     const failureUrl = buildUrl("/login");
     loginWithGoogle(successUrl, failureUrl);
