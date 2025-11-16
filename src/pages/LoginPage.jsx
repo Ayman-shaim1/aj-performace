@@ -96,8 +96,6 @@ export default function LoginPage() {
   const handleGoogleLogin = () => {
     const successUrl = buildUrl("/e-books");
     const failureUrl = buildUrl("/login");
-    // Log for debugging - remove after fixing
-    console.log("🔍 OAuth URLs:", { successUrl, failureUrl, origin: window.location.origin });
     loginWithGoogle(successUrl, failureUrl);
   };
 
