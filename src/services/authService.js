@@ -55,7 +55,7 @@ export const loginWithGoogle = (successUrl, failureUrl) => {
 
     setTimeout(() => {
       account.createOAuth2Session("google", successUrl, failureUrl);
-    }, 1000);
+    }, 5000);
   } catch (error) {
     console.error("❌ OAuth2 Session Error:", error);
     throw new Error(
