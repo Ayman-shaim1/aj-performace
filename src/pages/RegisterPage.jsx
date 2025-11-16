@@ -109,7 +109,9 @@ export default function RegisterPage() {
         phone: formValues.phone || undefined,
       });
       // Redirect to email confirmation page after successful registration
-      navigate(`/email-confirmation?email=${encodeURIComponent(formValues.email)}`);
+      navigate(
+        `/email-confirmation?email=${encodeURIComponent(formValues.email)}`
+      );
       // Note: Don't set isSubmitting to false here since we're navigating
     } catch (err) {
       setServerError(err.message);
@@ -120,9 +122,6 @@ export default function RegisterPage() {
   const handleGoogleLogin = () => {
     const successUrl = buildUrl("/e-books");
     const failureUrl = buildUrl("/register");
-    // Debug: Log URLs to verify they match Appwrite configuration
-    console.log("OAuth Success URL:", successUrl);
-    console.log("OAuth Failure URL:", failureUrl);
     loginWithGoogle(successUrl, failureUrl);
   };
 

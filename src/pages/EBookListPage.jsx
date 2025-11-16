@@ -205,9 +205,6 @@ export default function EBookListPage() {
   const handleGoogleLogin = () => {
     const successUrl = buildUrl("/e-books");
     const failureUrl = buildUrl("/login");
-    // Debug: Log URLs to verify they match Appwrite configuration
-    console.log("OAuth Success URL:", successUrl);
-    console.log("OAuth Failure URL:", failureUrl);
     loginWithGoogle(successUrl, failureUrl);
   };
 

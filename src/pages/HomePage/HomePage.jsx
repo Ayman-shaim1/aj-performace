@@ -8,8 +8,7 @@ import TestimonialsSection from "./TestimonialsSection";
 import FAQSection from "./FAQSection";
 import ContactMeSection from "./ContactMeSection";
 import FooterSection from "./FooterSection";
-import { Icon } from "@chakra-ui/react";
-import { FiMenu } from "react-icons/fi";
+
 
 export default function HomePage({ onHeroInViewChange }) {
   const heroRef = useRef(null);
