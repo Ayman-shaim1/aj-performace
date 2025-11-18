@@ -4,10 +4,11 @@ import { buildUrl } from "../utils/url";
 /**
  * Login with email and password
  * Note: User must have verified their email to login
+ * Note: Users with isAdmin = true CANNOT use this function - they must use adminLogin()
  * @param {string} email - User email
  * @param {string} password - User password
  * @returns {Promise} Appwrite session object
- * @throws {Error} If login fails or email is not verified
+ * @throws {Error} If login fails, email is not verified, or user is an admin
  */
 export const login = async (email, password) => {
   try {
@@ -29,10 +30,45 @@ export const login = async (email, password) => {
       );
     }
 
+    // Check if user is an admin - admins must use adminLogin() instead
+    const databaseId = import.meta.env.VITE_APPWRITE_DATABASE_ID;
+    const collectionId = "users";
+
+    if (databaseId) {
+      try {
+        // Get user document to check isAdmin
+        const userDoc = await databases.getDocument(
+          databaseId,
+          collectionId,
+          user.$id
+        );
+
+        // If user is an admin, block them from using regular login
+        if (userDoc.isAdmin) {
+          // Delete the session since admin cannot use regular login
+          try {
+            await account.deleteSession("current");
+          } catch (deleteError) {
+            // Ignore deletion errors
+          }
+          throw new Error(
+            "Administrator accounts must use the admin login page. Please use /admin/login instead."
+          );
+        }
+      } catch (getDocError) {
+        // If document doesn't exist or error fetching, allow login
+        // (user might not have document yet, or it's a new user)
+        // Only block if we successfully retrieved the document and isAdmin = true
+      }
+    }
+
     return session;
   } catch (error) {
     // If it's already our custom error, throw it
-    if (error.message.includes("not verified")) {
+    if (
+      error.message.includes("not verified") ||
+      error.message.includes("Administrator accounts")
+    ) {
       throw error;
     }
     throw new Error(
@@ -53,6 +89,99 @@ export const loginWithGoogle = (successUrl, failureUrl) => {
   } catch (error) {
     throw new Error(
       error?.message || "Unable to sign in with Google. Please try again."
+    );
+  }
+};
+
+/**
+ * Admin login with email and password
+ * Note: User must have verified their email AND isAdmin = true in user document
+ * @param {string} email - User email
+ * @param {string} password - User password
+ * @returns {Promise} Appwrite session object
+ * @throws {Error} If login fails, email is not verified, or user is not an admin
+ */
+export const adminLogin = async (email, password) => {
+  try {
+    // First, try to create a session (same as regular login)
+    const session = await account.createEmailPasswordSession(email, password);
+
+    // Check if user email is verified
+    const user = await account.get();
+
+    if (!user.emailVerification) {
+      // Delete the session since email is not verified
+      try {
+        await account.deleteSession("current");
+      } catch (deleteError) {
+        // Ignore deletion errors
+      }
+      throw new Error(
+        "Your account is not verified. Please check your email and verify your account before logging in."
+      );
+    }
+
+    // Check if user has admin privileges
+    const databaseId = import.meta.env.VITE_APPWRITE_DATABASE_ID;
+    const collectionId = "users";
+
+    if (!databaseId) {
+      // Delete session if database config is missing
+      try {
+        await account.deleteSession("current");
+      } catch (deleteError) {
+        // Ignore deletion errors
+      }
+      throw new Error(
+        "Admin authentication configuration error. Please contact support."
+      );
+    }
+
+    try {
+      // Get user document from database
+      const userDoc = await databases.getDocument(
+        databaseId,
+        collectionId,
+        user.$id
+      );
+
+      // Check if user has isAdmin = true
+      if (!userDoc.isAdmin) {
+        // Delete the session since user is not an admin
+        try {
+          await account.deleteSession("current");
+        } catch (deleteError) {
+          // Ignore deletion errors
+        }
+        throw new Error(
+          "Access denied. You do not have administrator privileges."
+        );
+      }
+
+      return session;
+    } catch (getDocError) {
+      // If document doesn't exist or error fetching, user is not an admin
+      try {
+        await account.deleteSession("current");
+      } catch (deleteError) {
+        // Ignore deletion errors
+      }
+      throw new Error(
+        "Access denied. You do not have administrator privileges."
+      );
+    }
+  } catch (error) {
+    // If it's already our custom error, throw it
+    if (
+      error.message.includes("not verified") ||
+      error.message.includes("Access denied") ||
+      error.message.includes("configuration error")
+    ) {
+      throw error;
+    }
+    throw new Error(
+      error?.message ||
+        "Unable to sign in with these credentials. Please try again."
     );
   }
 };
