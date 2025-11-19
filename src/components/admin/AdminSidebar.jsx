@@ -3,7 +3,10 @@ import {
   VStack,
   Text,
   Button,
-  Tooltip,
+  TooltipRoot,
+  TooltipTrigger,
+  TooltipContent,
+  TooltipPositioner,
   useBreakpointValue,
 } from "@chakra-ui/react";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -25,8 +28,7 @@ const menuItems = [
   { icon: FiHome, label: "Dashboard", path: "/admin/dashboard" },
   { icon: FiUsers, label: "Users", path: "/admin/users" },
   { icon: FiBook, label: "E-Books", path: "/admin/ebooks" },
-  { icon: FiBarChart2, label: "Analytics", path: "/admin/analytics" },
-  { icon: FiSettings, label: "Settings", path: "/admin/settings" },
+  { icon: FiBarChart2, label: "Orders", path: "/admin/orders" },
 ];
 
 export default function AdminSidebar() {
@@ -36,7 +38,7 @@ export default function AdminSidebar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [hoveredItem, setHoveredItem] = useState(null);
   const breakpoint = useBreakpointValue({ base: true, lg: false });
-  const showTooltips = breakpoint === "base";
+  const showTooltips = Boolean(breakpoint);
 
   const handleLogout = async () => {
     try {
@@ -77,35 +79,7 @@ export default function AdminSidebar() {
             {menuItems.map((item) => {
               const active = isActive(item.path);
               const IconComponent = item.icon;
-              const button = (
-                <Button
-                  onClick={() => handleNavigation(item.path)}
-                  justifyContent={{ base: "center", lg: "flex-start" }}
-                  borderRadius="none"
-                  bg={active ? brandGold : "transparent"}
-                  color={active ? "white" : "gray.700"}
-                  _hover={{
-                    bg: active ? brandGold : "gray.800",
-                    color: active ? "white" : "gray.900",
-                  }}
-                  fontWeight={active ? "semibold" : "normal"}
-                  px={{ base: 0, lg: 4 }}
-                  py={4}
-                  h="auto"
-                  w="100%"
-                  transition="none"
-                >
-                  <IconComponent size={18} color={active ? "white" : "white"} />
-                  <Text
-                    display={{ base: "none", lg: "block" }}
-                    ml={2}
-                    fontSize="sm"
-                    color={active ? "white" : "white"}
-                  >
-                    {item.label}
-                  </Text>
-                </Button>
-              );
+
               return (
                 <Box
                   key={item.path}
@@ -114,16 +88,74 @@ export default function AdminSidebar() {
                   onMouseLeave={() => setHoveredItem(null)}
                 >
                   {showTooltips ? (
-                    <Tooltip
-                      label={item.label}
-                      placement="right"
-                      hasArrow
-                      openDelay={300}
-                    >
-                      {button}
-                    </Tooltip>
+                    <TooltipRoot openDelay={300}>
+                      <TooltipTrigger asChild>
+                        <Button
+                          onClick={() => handleNavigation(item.path)}
+                          justifyContent={{ base: "center", lg: "flex-start" }}
+                          borderRadius="none"
+                          bg={active ? brandGold : "transparent"}
+                          color={active ? "white" : "gray.700"}
+                          _hover={{
+                            bg: active ? brandGold : "gray.800",
+                            color: active ? "white" : "gray.900",
+                          }}
+                          fontWeight={active ? "semibold" : "normal"}
+                          px={{ base: 0, lg: 4 }}
+                          py={4}
+                          h="auto"
+                          w="100%"
+                          transition="none"
+                        >
+                          <IconComponent
+                            size={18}
+                            color={active ? "white" : "white"}
+                          />
+                          <Text
+                            display={{ base: "none", lg: "block" }}
+                            ml={2}
+                            fontSize="sm"
+                            color={active ? "white" : "white"}
+                          >
+                            {item.label}
+                          </Text>
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipPositioner>
+                        <TooltipContent>{item.label}</TooltipContent>
+                      </TooltipPositioner>
+                    </TooltipRoot>
                   ) : (
-                    button
+                    <Button
+                      onClick={() => handleNavigation(item.path)}
+                      justifyContent={{ base: "center", lg: "flex-start" }}
+                      borderRadius="none"
+                      bg={active ? brandGold : "transparent"}
+                      color={active ? "white" : "gray.700"}
+                      _hover={{
+                        bg: active ? brandGold : "gray.800",
+                        color: active ? "white" : "gray.900",
+                      }}
+                      fontWeight={active ? "semibold" : "normal"}
+                      px={{ base: 0, lg: 4 }}
+                      py={4}
+                      h="auto"
+                      w="100%"
+                      transition="none"
+                    >
+                      <IconComponent
+                        size={18}
+                        color={active ? "white" : "white"}
+                      />
+                      <Text
+                        display={{ base: "none", lg: "block" }}
+                        ml={2}
+                        fontSize="sm"
+                        color={active ? "white" : "white"}
+                      >
+                        {item.label}
+                      </Text>
+                    </Button>
                   )}
                 </Box>
               );
@@ -139,49 +171,70 @@ export default function AdminSidebar() {
           onMouseEnter={() => setHoveredItem("logout")}
           onMouseLeave={() => setHoveredItem(null)}
         >
-          {(() => {
-            const logoutButton = (
-              <Button
-                onClick={handleLogout}
-                borderRadius="none"
-                bg="transparent"
-                color="red.500"
-                _hover={{
-                  bg: "red.700",
-                  color: "white",
-                }}
-                justifyContent={{ base: "center", lg: "flex-start" }}
-                px={{ base: 0, lg: 4 }}
-                py={4}
-                h="auto"
-                minW={{ base: "70px", lg: "auto" }}
-                transition="none"
-                fontWeight="normal"
-                width="100%"
-              >
-                <FiLogOut size={18} color="red.500" />
-                <Text
-                  display={{ base: "none", lg: "block" }}
-                  ml={2}
-                  fontSize="sm"
+          {showTooltips ? (
+            <TooltipRoot openDelay={300}>
+              <TooltipTrigger asChild>
+                <Button
+                  onClick={handleLogout}
+                  borderRadius="none"
+                  bg="transparent"
+                  color="red.500"
+                  _hover={{
+                    bg: "red.700",
+                    color: "white",
+                  }}
+                  justifyContent={{ base: "center", lg: "flex-start" }}
+                  px={{ base: 0, lg: 4 }}
+                  py={4}
+                  h="auto"
+                  minW={{ base: "70px", lg: "auto" }}
+                  transition="none"
+                  fontWeight="normal"
+                  width="100%"
                 >
-                  Logout
-                </Text>
-              </Button>
-            );
-            return showTooltips ? (
-              <Tooltip
-                label="Logout"
-                placement="right"
-                hasArrow
-                openDelay={300}
+                  <FiLogOut size={18} color="red.500" />
+                  <Text
+                    display={{ base: "none", lg: "block" }}
+                    ml={2}
+                    fontSize="sm"
+                  >
+                    Logout
+                  </Text>
+                </Button>
+              </TooltipTrigger>
+              <TooltipPositioner>
+                <TooltipContent>Logout</TooltipContent>
+              </TooltipPositioner>
+            </TooltipRoot>
+          ) : (
+            <Button
+              onClick={handleLogout}
+              borderRadius="none"
+              bg="transparent"
+              color="red.500"
+              _hover={{
+                bg: "red.700",
+                color: "white",
+              }}
+              justifyContent={{ base: "center", lg: "flex-start" }}
+              px={{ base: 0, lg: 4 }}
+              py={4}
+              h="auto"
+              minW={{ base: "70px", lg: "auto" }}
+              transition="none"
+              fontWeight="normal"
+              width="100%"
+            >
+              <FiLogOut size={18} color="red.500" />
+              <Text
+                display={{ base: "none", lg: "block" }}
+                ml={2}
+                fontSize="sm"
               >
-                {logoutButton}
-              </Tooltip>
-            ) : (
-              logoutButton
-            );
-          })()}
+                Logout
+              </Text>
+            </Button>
+          )}
         </Box>
       </VStack>
     </Box>
