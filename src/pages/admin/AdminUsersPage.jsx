@@ -207,10 +207,12 @@ export default function AdminUsersPage() {
           {/* Users Table */}
           <Box
             borderRadius="none"
-            border="1px solid"
             borderColor="gray.200"
             bg="white"
             overflowX="auto"
+            // border="1px solid"
+            // p={7}
+
           >
             {loading ? (
               <Flex justify="center" align="center" py={12}>
