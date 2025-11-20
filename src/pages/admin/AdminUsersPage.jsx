@@ -9,6 +9,7 @@ import {
   Spinner,
   Badge,
   Flex,
+  useBreakpointValue,
 } from "@chakra-ui/react";
 import {
   FiUsers,
@@ -30,6 +31,8 @@ export default function AdminUsersPage() {
   const [totalUsers, setTotalUsers] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const limit = 25;
+  const showPhoneColumn = useBreakpointValue({ base: false, md: true });
+  const showAuthMethodColumn = useBreakpointValue({ base: false, md: true });
 
   const fetchUsers = async () => {
     try {
@@ -105,19 +108,19 @@ export default function AdminUsersPage() {
   };
 
   return (
-    <Box bg="gray.50" minH="100vh" py={8}>
-      <Container maxW="7xl">
-        <VStack spacing={8} align="stretch">
+    <Box bg="gray.50" minH="100vh" py={{ base: 4, md: 8 }}>
+      <Container maxW="7xl" px={{ base: 4, md: 6 }}>
+        <VStack spacing={{ base: 4, md: 8 }} align="stretch">
           {/* Header */}
-          <HStack spacing={4}>
-            <Box color={brandGold} fontSize="3xl">
+          <HStack spacing={4} flexWrap={{ base: "wrap", md: "nowrap" }}>
+            <Box color={brandGold} fontSize={{ base: "2xl", md: "3xl" }}>
               <FiUsers />
             </Box>
-            <VStack align="start" spacing={1}>
-              <Heading size="xl" color="gray.900">
+            <VStack align="start" spacing={1} flex={1}>
+              <Heading size={{ base: "lg", md: "xl" }} color="gray.900">
                 User Management
               </Heading>
-              <Text color="gray.600">
+              <Text color="gray.600" fontSize={{ base: "sm", md: "md" }}>
                 Manage users, permissions, and access controls
               </Text>
             </VStack>
@@ -128,7 +131,7 @@ export default function AdminUsersPage() {
             borderRadius="none"
             border="1px solid"
             borderColor="gray.200"
-            p={6}
+            p={{ base: 4, md: 6 }}
             bg="white"
           >
             <Flex
@@ -161,6 +164,7 @@ export default function AdminUsersPage() {
                     padding: "8px 8px 8px 40px",
                     width: "100%",
                     fontSize: "16px",
+                    minHeight: "44px", // Better touch target on mobile
                   }}
                   onFocus={(e) => {
                     e.target.style.borderColor = brandGold;
@@ -185,6 +189,7 @@ export default function AdminUsersPage() {
                     padding: "8px",
                     width: "100%",
                     fontSize: "16px",
+                    minHeight: "44px", // Better touch target on mobile
                   }}
                   onFocus={(e) => {
                     e.target.style.borderColor = brandGold;
@@ -207,23 +212,21 @@ export default function AdminUsersPage() {
           {/* Users Table */}
           <Box
             borderRadius="none"
+            border="1px solid"
             borderColor="gray.200"
             bg="white"
-            overflowX="auto"
-            // border="1px solid"
-            // p={7}
-
+            overflow="hidden"
           >
             {loading ? (
               <Flex justify="center" align="center" py={12}>
                 <Spinner size="xl" color={brandGold} thickness="3px" />
               </Flex>
             ) : users.length === 0 ? (
-              <Box p={8} textAlign="center">
-                <Text color="gray.600" fontSize="lg">
+              <Box p={{ base: 6, md: 8 }} textAlign="center">
+                <Text color="gray.600" fontSize={{ base: "md", md: "lg" }}>
                   No users found
                 </Text>
-                <Text color="gray.500" fontSize="sm" mt={2}>
+                <Text color="gray.500" fontSize={{ base: "xs", md: "sm" }} mt={2}>
                   {searchTerm || adminFilter !== "all"
                     ? "Try adjusting your search or filters"
                     : "No users have been registered yet"}
@@ -231,10 +234,81 @@ export default function AdminUsersPage() {
               </Box>
             ) : (
               <>
-                <Box overflowX="auto">
+                {/* Mobile Card View */}
+                <Box display={{ base: "block", md: "none" }}>
+                  <VStack spacing={0} align="stretch" divider={<Box borderTop="1px solid" borderColor="gray.200" />}>
+                    {users.map((user) => (
+                      <Box
+                        key={user.$id}
+                        p={4}
+                        _hover={{ bg: "gray.50" }}
+                        transition="background 0.2s"
+                      >
+                        <VStack align="stretch" spacing={3}>
+                          <Flex justify="space-between" align="start">
+                            <VStack align="start" spacing={1} flex={1}>
+                              <Text fontWeight="semibold" color="gray.900" fontSize="md">
+                                {user.fullName || "N/A"}
+                              </Text>
+                              <Text color="gray.600" fontSize="sm" wordBreak="break-all">
+                                {user.email || "N/A"}
+                              </Text>
+                            </VStack>
+                            {user.isAdmin ? (
+                              <Badge
+                                bg={brandGold}
+                                color="white"
+                                borderRadius="none"
+                                px={2}
+                                py={1}
+                                fontSize="xs"
+                                fontWeight="semibold"
+                                ml={2}
+                              >
+                                Admin
+                              </Badge>
+                            ) : (
+                              <Badge
+                                bg="gray.200"
+                                color="gray.700"
+                                borderRadius="none"
+                                px={2}
+                                py={1}
+                                fontSize="xs"
+                                fontWeight="semibold"
+                                ml={2}
+                              >
+                                User
+                              </Badge>
+                            )}
+                          </Flex>
+                          <HStack spacing={4} fontSize="sm" color="gray.600" flexWrap="wrap">
+                            {user.phoneNumber && (
+                              <Text>
+                                <Text as="span" fontWeight="medium">Phone:</Text> {user.phoneNumber}
+                              </Text>
+                            )}
+                            <Text>
+                              <Text as="span" fontWeight="medium">Auth:</Text> {user.authMethod === "google" ? "Google" : "Email"}
+                            </Text>
+                            <Text>
+                              <Text as="span" fontWeight="medium">Joined:</Text> {formatDate(user.$createdAt)}
+                            </Text>
+                          </HStack>
+                        </VStack>
+                      </Box>
+                    ))}
+                  </VStack>
+                </Box>
+
+                {/* Desktop Table View */}
+                <Box display={{ base: "none", md: "block" }} overflowX="auto">
                   <table
                     width="100%"
-                    style={{ borderCollapse: "collapse", width: "100%" }}
+                    style={{ 
+                      borderCollapse: "collapse", 
+                      width: "100%"
+                    }}
                   >
                     <thead style={{ backgroundColor: "#F7FAFC" }}>
                       <tr>
@@ -248,6 +322,7 @@ export default function AdminUsersPage() {
                             letterSpacing: "0.05em",
                             padding: "16px",
                             textAlign: "left",
+                            whiteSpace: "nowrap",
                           }}
                         >
                           Name
@@ -262,10 +337,28 @@ export default function AdminUsersPage() {
                             letterSpacing: "0.05em",
                             padding: "16px",
                             textAlign: "left",
+                            whiteSpace: "nowrap",
                           }}
                         >
                           Email
                         </th>
+                        {showPhoneColumn && (
+                          <th
+                            style={{
+                              border: "1px solid #E2E8F0",
+                              color: "#4A5568",
+                              fontWeight: 600,
+                              textTransform: "uppercase",
+                              fontSize: "12px",
+                              letterSpacing: "0.05em",
+                              padding: "16px",
+                              textAlign: "left",
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            Phone
+                          </th>
+                        )}
                         <th
                           style={{
                             border: "1px solid #E2E8F0",
@@ -276,24 +369,28 @@ export default function AdminUsersPage() {
                             letterSpacing: "0.05em",
                             padding: "16px",
                             textAlign: "left",
-                          }}
-                        >
-                          Phone
-                        </th>
-                        <th
-                          style={{
-                            border: "1px solid #E2E8F0",
-                            color: "#4A5568",
-                            fontWeight: 600,
-                            textTransform: "uppercase",
-                            fontSize: "12px",
-                            letterSpacing: "0.05em",
-                            padding: "16px",
-                            textAlign: "left",
+                            whiteSpace: "nowrap",
                           }}
                         >
                           Status
                         </th>
+                        {showAuthMethodColumn && (
+                          <th
+                            style={{
+                              border: "1px solid #E2E8F0",
+                              color: "#4A5568",
+                              fontWeight: 600,
+                              textTransform: "uppercase",
+                              fontSize: "12px",
+                              letterSpacing: "0.05em",
+                              padding: "16px",
+                              textAlign: "left",
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            Auth Method
+                          </th>
+                        )}
                         <th
                           style={{
                             border: "1px solid #E2E8F0",
@@ -304,20 +401,7 @@ export default function AdminUsersPage() {
                             letterSpacing: "0.05em",
                             padding: "16px",
                             textAlign: "left",
-                          }}
-                        >
-                          Auth Method
-                        </th>
-                        <th
-                          style={{
-                            border: "1px solid #E2E8F0",
-                            color: "#4A5568",
-                            fontWeight: 600,
-                            textTransform: "uppercase",
-                            fontSize: "12px",
-                            letterSpacing: "0.05em",
-                            padding: "16px",
-                            textAlign: "left",
+                            whiteSpace: "nowrap",
                           }}
                         >
                           Joined
@@ -335,7 +419,8 @@ export default function AdminUsersPage() {
                             e.currentTarget.style.backgroundColor = "#F7FAFC";
                           }}
                           onMouseLeave={(e) => {
-                            e.currentTarget.style.backgroundColor = "transparent";
+                            e.currentTarget.style.backgroundColor =
+                              "transparent";
                           }}
                         >
                           <td
@@ -345,7 +430,9 @@ export default function AdminUsersPage() {
                               padding: "16px",
                             }}
                           >
-                            {user.fullName || "N/A"}
+                            <Text fontWeight="medium" fontSize="15px">
+                              {user.fullName || "N/A"}
+                            </Text>
                           </td>
                           <td
                             style={{
@@ -354,17 +441,22 @@ export default function AdminUsersPage() {
                               padding: "16px",
                             }}
                           >
-                            {user.email || "N/A"}
+                            <Text fontSize="14px" wordBreak="break-word">
+                              {user.email || "N/A"}
+                            </Text>
                           </td>
-                          <td
-                            style={{
-                              border: "1px solid #E2E8F0",
-                              color: "#718096",
-                              padding: "16px",
-                            }}
-                          >
-                            {user.phoneNumber || "N/A"}
-                          </td>
+                          {showPhoneColumn && (
+                            <td
+                              style={{
+                                border: "1px solid #E2E8F0",
+                                color: "#718096",
+                                padding: "16px",
+                                fontSize: "14px",
+                              }}
+                            >
+                              {user.phoneNumber || "N/A"}
+                            </td>
+                          )}
                           <td
                             style={{
                               border: "1px solid #E2E8F0",
@@ -397,16 +489,18 @@ export default function AdminUsersPage() {
                               </Badge>
                             )}
                           </td>
-                          <td
-                            style={{
-                              border: "1px solid #E2E8F0",
-                              color: "#718096",
-                              fontSize: "14px",
-                              padding: "16px",
-                            }}
-                          >
-                            {user.authMethod === "google" ? "Google" : "Email"}
-                          </td>
+                          {showAuthMethodColumn && (
+                            <td
+                              style={{
+                                border: "1px solid #E2E8F0",
+                                color: "#718096",
+                                fontSize: "14px",
+                                padding: "16px",
+                              }}
+                            >
+                              {user.authMethod === "google" ? "Google" : "Email"}
+                            </td>
+                          )}
                           <td
                             style={{
                               border: "1px solid #E2E8F0",
@@ -426,19 +520,29 @@ export default function AdminUsersPage() {
                 {/* Pagination */}
                 {totalPages > 1 && (
                   <Flex
+                    direction={{ base: "column", md: "row" }}
                     justify="space-between"
-                    align="center"
-                    p={4}
+                    align={{ base: "stretch", md: "center" }}
+                    gap={{ base: 3, md: 0 }}
+                    p={{ base: 3, md: 4 }}
                     borderTop="1px solid"
                     borderColor="gray.200"
                     bg="gray.50"
                   >
-                    <Text color="gray.600" fontSize="sm">
+                    <Text 
+                      color="gray.600" 
+                      fontSize={{ base: "xs", md: "sm" }}
+                      textAlign={{ base: "center", md: "left" }}
+                    >
                       Showing {(currentPage - 1) * limit + 1} to{" "}
                       {Math.min(currentPage * limit, totalUsers)} of{" "}
                       {totalUsers} users
                     </Text>
-                    <HStack spacing={2}>
+                    <HStack 
+                      spacing={2} 
+                      justify={{ base: "center", md: "flex-end" }}
+                      flexWrap="wrap"
+                    >
                       <Button
                         onClick={handlePreviousPage}
                         disabled={currentPage === 1}
@@ -455,14 +559,19 @@ export default function AdminUsersPage() {
                           opacity: 0.5,
                           cursor: "not-allowed",
                         }}
-                        size="sm"
+                        size={{ base: "sm", md: "sm" }}
                       >
                         <HStack spacing={1}>
                           <FiChevronLeft />
-                          <Text>Previous</Text>
+                          <Text display={{ base: "none", sm: "block" }}>Previous</Text>
                         </HStack>
                       </Button>
-                      <Text color="gray.600" fontSize="sm" px={2}>
+                      <Text 
+                        color="gray.600" 
+                        fontSize={{ base: "xs", md: "sm" }} 
+                        px={2}
+                        whiteSpace="nowrap"
+                      >
                         Page {currentPage} of {totalPages}
                       </Text>
                       <Button
@@ -481,10 +590,10 @@ export default function AdminUsersPage() {
                           opacity: 0.5,
                           cursor: "not-allowed",
                         }}
-                        size="sm"
+                        size={{ base: "sm", md: "sm" }}
                       >
                         <HStack spacing={1}>
-                          <Text>Next</Text>
+                          <Text display={{ base: "none", sm: "block" }}>Next</Text>
                           <FiChevronRight />
                         </HStack>
                       </Button>

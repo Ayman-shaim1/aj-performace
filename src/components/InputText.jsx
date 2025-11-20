@@ -1,10 +1,5 @@
 import { useState } from "react";
-import {
-  Box,
-  Input,
-  Text,
-  Textarea,
-} from "@chakra-ui/react";
+import { Box, Input, Text, Textarea } from "@chakra-ui/react";
 import { FiEye, FiEyeOff } from "react-icons/fi";
 import { brandGold } from "../theme/colors";
 
@@ -47,6 +42,9 @@ export default function InputText({
           borderColor={error ? "red.300" : undefined}
           minH="8rem"
           required={isRequired}
+          _placeholder={{
+            color: "gray.400",
+          }}
           w={w}
           _focus={{
             borderColor: error ? "red.500" : brandGold,

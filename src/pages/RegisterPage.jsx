@@ -74,6 +74,20 @@ export default function RegisterPage() {
     }
     if (!formValues.phone.trim()) {
       newErrors.phone = "Phone number is required";
+    } else {
+      // Validate phone format: must start with + and have max 15 digits
+      const phoneClean = formValues.phone.trim();
+      if (!phoneClean.startsWith("+")) {
+        newErrors.phone = "Phone number must start with '+'";
+      } else {
+        // Count digits (excluding the +)
+        const digitsOnly = phoneClean.replace(/\D/g, "");
+        if (digitsOnly.length === 0) {
+          newErrors.phone = "Phone number must contain digits";
+        } else if (digitsOnly.length > 15) {
+          newErrors.phone = "Phone number must have maximum 15 digits";
+        }
+      }
     }
     if (!formValues.password) {
       newErrors.password = "Password is required";
@@ -102,11 +116,23 @@ export default function RegisterPage() {
     // Set loading state immediately
     setIsSubmitting(true);
     try {
+      // Clean phone number: remove spaces and ensure it starts with +
+      let phoneClean = formValues.phone.trim();
+      if (phoneClean) {
+        if (!phoneClean.startsWith("+")) {
+          // If user forgot the +, add it
+          phoneClean = "+" + phoneClean;
+        }
+        // Remove all non-digit characters except the leading +
+        const digitsOnly = phoneClean.substring(1).replace(/\D/g, "").substring(0, 15);
+        phoneClean = "+" + digitsOnly;
+      }
+      
       await register({
         email: formValues.email,
         password: formValues.password,
         fullName: formValues.fullName,
-        phone: formValues.phone || undefined,
+        phone: phoneClean || undefined,
       });
       // Redirect to email confirmation page after successful registration
       navigate(
@@ -120,7 +146,7 @@ export default function RegisterPage() {
   };
 
   const handleGoogleLogin = () => {
-    const successUrl = buildUrl("/e-books");
+    const successUrl = buildUrl("/complete-profile");
     const failureUrl = buildUrl("/register");
     loginWithGoogle(successUrl, failureUrl);
   };

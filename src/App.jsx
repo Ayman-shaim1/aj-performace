@@ -8,6 +8,7 @@ import RegisterPage from "./pages/RegisterPage";
 import EmailConfirmationPage from "./pages/EmailConfirmationPage";
 import VerifyEmailPage from "./pages/VerifyEmailPage";
 import ResendVerificationPage from "./pages/ResendVerificationPage";
+import CompleteProfilePage from "./pages/CompleteProfilePage";
 import NotFoundPage from "./pages/NotFoundPage";
 import AdminLoginPage from "./pages/admin/AdminLoginPage";
 import AdminLayout from "./layouts/AdminLayout";
@@ -48,6 +49,7 @@ function AppContent() {
           path="/resend-verification"
           element={<ResendVerificationPage />}
         />
+        <Route path="/complete-profile" element={<CompleteProfilePage />} />
         <Route path="/admin/login" element={<AdminLoginPage />} />
 
         {/* Admin Routes with Layout */}

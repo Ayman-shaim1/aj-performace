@@ -25,8 +25,14 @@ import {
   DialogPositioner,
   Spinner,
 } from "@chakra-ui/react";
-import { Link as RouterLink } from "react-router-dom";
-import { FiArrowLeft, FiLogIn, FiAlertCircle, FiLogOut } from "react-icons/fi";
+import { Link as RouterLink, useNavigate } from "react-router-dom";
+import {
+  FiArrowLeft,
+  FiLogIn,
+  FiAlertCircle,
+  FiLogOut,
+  FiInbox,
+} from "react-icons/fi";
 import { useState, useEffect } from "react";
 import { brandGold } from "../theme/colors";
 import InputText from "../components/InputText";
@@ -38,82 +44,30 @@ import {
   ensureUserDocument,
   logout as logoutService,
 } from "../services/authService";
-import { account } from "../config/appwrite";
+import { account, databases } from "../config/appwrite";
 import { useAuth } from "../hooks/useAuth";
 import { buildUrl } from "../utils/url";
-
-// Static list of categories displayed in the sidebar filter summary.
-const categories = [
-  { label: "All", count: 5 },
-  { label: "Performance Training", count: 2 },
-  { label: "Nutrition", count: 2 },
-  { label: "Mindset & Recovery", count: 1 },
-];
-
-// Data set powering the e-book grid cards and modal details.
-const ebooks = [
-  {
-    title: "Explosive Athlete Blueprint",
-    description:
-      "A 12-week periodized plan blending force-velocity profiling, contrast training, and mobility resets for consistent power gains.",
-    category: "Performance Training",
-    level: "Advanced",
-    length: "96 pages",
-    cover:
-      "https://images.pexels.com/photos/4761791/pexels-photo-4761791.jpeg?auto=compress&cs=tinysrgb&w=1200",
-    price: 39,
-  },
-  {
-    title: "Fuel Like a Pro: Game-Day Nutrition",
-    description:
-      "Practical fueling roadmaps for training, game-day, and recovery windows with meal plans tailored to combat sports and field athletes.",
-    category: "Nutrition",
-    level: "Intermediate",
-    length: "72 pages",
-    cover:
-      "https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=1200",
-    price: 29,
-  },
-  {
-    title: "High-Output Conditioning Systems",
-    description:
-      "Energy system protocols customized to your practice calendar with heart-rate guided tempo and sprint sessions.",
-    category: "Performance Training",
-    level: "Intermediate",
-    length: "84 pages",
-    cover:
-      "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=800&q=80",
-    price: 32,
-  },
-  {
-    title: "Recovery Rituals for Relentless Athletes",
-    description:
-      "Daily and weekly recovery stacks combining breathwork, sleep hygiene, and micro-mobility to keep your CNS primed.",
-    category: "Mindset & Recovery",
-    level: "All Levels",
-    length: "58 pages",
-    cover:
-      "https://images.unsplash.com/photo-1517832207067-4db24a2ae47c?auto=format&fit=crop&w=800&q=80",
-    price: 24,
-  },
-  {
-    title: "Macro Mastery for Hybrid Competitors",
-    description:
-      "Macro periodization strategies, supplement timing, and hydration frameworks to support mixed training blocks.",
-    category: "Nutrition",
-    level: "All Levels",
-    length: "68 pages",
-    cover:
-      "https://images.unsplash.com/photo-1543353071-10c8ba85a904?auto=format&fit=crop&w=800&q=80",
-    price: 27,
-  },
-];
+import { getEBooks } from "../services/ebookService";
+import { getAllCategories } from "../services/categoryService";
+import { getImageUrl } from "../services/uploadService";
+import { getCategoryById } from "../services/categoryService";
 
 export default function EBookListPage() {
+  const navigate = useNavigate();
   // Track which e-book is open in the detail modal (null = hidden).
   const [selectedBook, setSelectedBook] = useState(null);
-  // Track the live search query (not wired yet—placeholder for future Appwrite integration).
+  // Track the live search query
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [ebooks, setEbooks] = useState([]);
+  const [allEbooks, setAllEbooks] = useState([]); // Store all ebooks for category counts
+  const [categories, setCategories] = useState([]);
+  const [ebooksLoading, setEbooksLoading] = useState(true);
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalEbooks, setTotalEbooks] = useState(0);
+  const limit = 12; // Number of e-books per page
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [loginForm, setLoginForm] = useState({
     email: "",
@@ -124,6 +78,81 @@ export default function EBookListPage() {
   const [isSubmittingLogin, setIsSubmittingLogin] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const { currentUser, checkAuth } = useAuth();
+
+  // Fetch categories
+  const fetchCategories = async () => {
+    try {
+      setCategoriesLoading(true);
+      const allCategories = await getAllCategories();
+      setCategories(allCategories);
+    } catch (error) {
+      console.error("Failed to fetch categories:", error);
+      setCategories([]);
+    } finally {
+      setCategoriesLoading(false);
+    }
+  };
+
+  // Fetch all e-books for category counts
+  const fetchAllEBooks = async () => {
+    try {
+      const result = await getEBooks({
+        limit: 1000,
+        offset: 0,
+        searchTerm: "",
+        categoryId: null,
+      });
+      setAllEbooks(result.ebooks);
+    } catch (error) {
+      console.error("Failed to fetch all e-books:", error);
+      setAllEbooks([]);
+    }
+  };
+
+  // Fetch e-books
+  const fetchEBooks = async () => {
+    try {
+      setEbooksLoading(true);
+      const categoryId = selectedCategory === "all" ? null : selectedCategory;
+      const offset = (currentPage - 1) * limit;
+      const result = await getEBooks({
+        limit,
+        offset,
+        searchTerm: searchTerm.trim(),
+        categoryId,
+      });
+      setEbooks(result.ebooks);
+      setTotalEbooks(result.total);
+      setTotalPages(Math.ceil(result.total / limit));
+    } catch (error) {
+      console.error("Failed to fetch e-books:", error);
+      setEbooks([]);
+      setTotalEbooks(0);
+      setTotalPages(1);
+    } finally {
+      setEbooksLoading(false);
+    }
+  };
+
+  // Load categories and all e-books on mount
+  useEffect(() => {
+    fetchCategories();
+    fetchAllEBooks();
+  }, []);
+
+  // Reset to page 1 when search term or category changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, selectedCategory]);
+
+  // Load e-books when page, search term, or category changes
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchEBooks();
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [currentPage, searchTerm, selectedCategory]);
 
   // Check if user just logged in via OAuth and ensure user document exists
   // This page is the OAuth success redirect URL, so we ensure user document with authMethod: 'google'
@@ -147,6 +176,32 @@ export default function EBookListPage() {
           // If document doesn't exist, create it with 'google'
           try {
             await ensureUserDocument("google");
+            
+            // Check if phone number is missing and redirect to complete profile
+            const databaseId = import.meta.env.VITE_APPWRITE_DATABASE_ID;
+            const collectionId = "users";
+            
+            if (databaseId) {
+              try {
+                const userDoc = await databases.getDocument(
+                  databaseId,
+                  collectionId,
+                  user.$id
+                );
+                
+                // If phone number is missing or empty, redirect to complete profile
+                if (!userDoc.phoneNumber || userDoc.phoneNumber.trim() === "") {
+                  navigate("/complete-profile");
+                  return;
+                }
+              } catch (docError) {
+                // Document might not exist yet, but ensureUserDocument should have created it
+                // If it still doesn't exist, redirect to complete profile to be safe
+                navigate("/complete-profile");
+                return;
+              }
+            }
+            
             return; // Success, exit
           } catch (error) {
             // Retry if we haven't exceeded max retries
@@ -178,11 +233,35 @@ export default function EBookListPage() {
     };
 
     checkAndCreateUserDocument();
-  }, []);
+  }, [navigate, checkAuth]);
+
+  // Transform database ebook to display format
+  const transformEbook = (ebook, categoryName = "Uncategorized") => {
+    return {
+      id: ebook.$id,
+      title: ebook.title,
+      description: ebook.description,
+      category: categoryName,
+      price: parseFloat(ebook.price).toFixed(2),
+      cover: getImageUrl(ebook.image),
+      // Additional fields for modal
+      categoryId: ebook.categorie,
+    };
+  };
 
   // Open the modal with the chosen book context.
-  const handleOpenModal = (book) => {
-    setSelectedBook(book);
+  const handleOpenModal = async (book) => {
+    // If book has categoryId, fetch category name
+    let categoryName = book.category;
+    if (book.categoryId) {
+      try {
+        const category = await getCategoryById(book.categoryId);
+        categoryName = category.name;
+      } catch (error) {
+        console.error("Failed to fetch category:", error);
+      }
+    }
+    setSelectedBook({ ...book, category: categoryName });
   };
 
   // Close the modal and reset the active book.
@@ -277,10 +356,16 @@ export default function EBookListPage() {
   };
 
   return (
-    <Box as="section" bg="white" py={{ base: 12, md: 20 }}>
+    <Box as="section" bg="white" py={{ base: 22, md: 20 ,lg:10}}>
       <Container maxW="8xl" px={{ base: 1, md: 10, lg: 5 }}>
         {/* Secondary navigation back to the landing page */}
-        <Flex justify="space-between" align="center">
+        <Flex
+          direction={{ base: "column", md: "row" }}
+          justify="space-between"
+          align={{ base: "stretch", md: "center" }}
+          gap={{ base: 4, md: 0 }}
+          mb={10}
+        >
           <Button
             as={RouterLink}
             to="/"
@@ -291,20 +376,26 @@ export default function EBookListPage() {
             _hover={{ bg: "gray.700" }}
             size="sm"
             px={5}
-            mb={10}
           >
             <FiArrowLeft color="white" /> Back to Home
           </Button>
 
           {currentUser ? (
-            <Flex align="center" gap={3} mb={10}>
+            <Flex
+              direction={{ base: "column", sm: "row" }}
+              align={{ base: "stretch", sm: "center" }}
+              gap={3}
+              w={{ base: "full", md: "auto" }}
+            >
               <Text
-                fontSize="md"
+                fontSize={{ base: "sm", md: "md" }}
                 fontWeight="semibold"
                 color="gray.500"
-                px={5}
+                px={{ base: 3, md: 5 }}
                 py={2}
                 textTransform="uppercase"
+                textAlign={{ base: "center", sm: "left" }}
+                noOfLines={1}
               >
                 Welcome, {currentUser.name || currentUser.email} !
               </Text>
@@ -318,6 +409,7 @@ export default function EBookListPage() {
                 onClick={handleLogout}
                 isDisabled={isLoggingOut}
                 position="relative"
+                w={{ base: "full", sm: "auto" }}
               >
                 {isLoggingOut ? (
                   <Stack direction="row" spacing={2} align="center">
@@ -339,10 +431,10 @@ export default function EBookListPage() {
               border="1px solid"
               borderColor="gray.200"
               px={5}
-              mb={10}
               color="black"
               _hover={{ bg: "gray.100" }}
               onClick={handleOpenLoginModal}
+              w={{ base: "full", md: "auto" }}
             >
               <FiLogIn color="black" /> Authenticate
             </Button>
@@ -428,84 +520,196 @@ export default function EBookListPage() {
                   bgGradient="linear(to-r, gray.100, gray.200, gray.100)"
                 />
                 <VStack spacing={4} align="stretch">
-                  {categories.map((category) => (
-                    <Flex
-                      key={category.label}
-                      justify="space-between"
-                      align="center"
-                      border="1px solid"
-                      borderColor="gray.100"
-                      px={4}
-                      py={3}
-                      borderRadius="none"
-                      transition="all 0.2s ease"
-                      _hover={{
-                        borderColor: brandGold,
-                        transform: "translateX(4px)",
-                        bg: "gray.50",
-                      }}
+                  <Flex
+                    justify="space-between"
+                    align="center"
+                    border="1px solid"
+                    borderColor={
+                      selectedCategory === "all" ? brandGold : "gray.100"
+                    }
+                    px={4}
+                    py={3}
+                    borderRadius="none"
+                    transition="all 0.2s ease"
+                    cursor="pointer"
+                    bg={selectedCategory === "all" ? "gray.50" : "white"}
+                    onClick={() => setSelectedCategory("all")}
+                    _hover={{
+                      borderColor: brandGold,
+                      transform: "translateX(4px)",
+                      bg: "gray.50",
+                    }}
+                  >
+                    <Text fontWeight="semibold" color="gray.700">
+                      All
+                    </Text>
+                    <Badge
+                      borderRadius="full"
+                      px={3}
+                      py={1}
+                      fontSize="xs"
+                      colorScheme="yellow"
                     >
-                      <Text fontWeight="semibold" color="gray.700">
-                        {category.label}
-                      </Text>
-                      <Badge
-                        borderRadius="full"
-                        px={3}
-                        py={1}
-                        fontSize="xs"
-                        colorScheme="yellow"
-                      >
-                        {category.count}
-                      </Badge>
+                      {allEbooks.length}
+                    </Badge>
+                  </Flex>
+                  {categoriesLoading ? (
+                    <Flex justify="center" py={4}>
+                      <Spinner size="sm" color={brandGold} />
                     </Flex>
-                  ))}
+                  ) : (
+                    categories.map((category) => {
+                      const categoryEbooksCount = allEbooks.filter(
+                        (ebook) => ebook.categorie === category.$id
+                      ).length;
+                      return (
+                        <Flex
+                          key={category.$id}
+                          justify="space-between"
+                          align="center"
+                          border="1px solid"
+                          borderColor={
+                            selectedCategory === category.$id
+                              ? brandGold
+                              : "gray.100"
+                          }
+                          px={4}
+                          py={3}
+                          borderRadius="none"
+                          transition="all 0.2s ease"
+                          cursor="pointer"
+                          bg={
+                            selectedCategory === category.$id
+                              ? "gray.50"
+                              : "white"
+                          }
+                          onClick={() => setSelectedCategory(category.$id)}
+                          _hover={{
+                            borderColor: brandGold,
+                            transform: "translateX(4px)",
+                            bg: "gray.50",
+                          }}
+                        >
+                          <Text fontWeight="semibold" color="gray.700">
+                            {category.name}
+                          </Text>
+                          <Badge
+                            borderRadius="full"
+                            px={3}
+                            py={1}
+                            fontSize="xs"
+                            colorScheme="yellow"
+                          >
+                            {categoryEbooksCount}
+                          </Badge>
+                        </Flex>
+                      );
+                    })
+                  )}
                 </VStack>
               </Stack>
             </GridItem>
 
             {/* Right column: responsive grid of e-book cards */}
             <GridItem>
-              <SimpleGrid
-                columns={{ base: 1, md: 2, lg: 3 }}
-                spacing={{ base: 8, md: 10, lg: 12 }}
-                rowGap={{ base: 2, md: 2, lg: 2 }}
-                columnGap={{ base: 2, md: 2, lg: 2 }}
-              >
-                {ebooks.map((book) => (
-                  <EBookItem
-                    key={book.title}
-                    book={book}
-                    onClick={() => handleOpenModal(book)}
-                  />
-                ))}
-              </SimpleGrid>
+              {ebooksLoading ? (
+                <Flex justify="center" align="center" py={20}>
+                  <Spinner size="xl" color={brandGold} thickness="3px" />
+                </Flex>
+              ) : ebooks.length === 0 ? (
+                <Box
+                  p={12}
+                  textAlign="center"
+                  bg="gray.50"
+                  borderRadius="none"
+                  border="1px solid"
+                  borderColor="gray.200"
+                >
+                  <VStack spacing={4}>
+                    <Box color="gray.400" fontSize="6xl" mb={2}>
+                      <FiInbox />
+                    </Box>
+                    <VStack spacing={2}>
+                      <Heading size="md" color="gray.700" fontWeight="semibold">
+                        No e-books found
+                      </Heading>
+                      <Text color="gray.500" fontSize="md" maxW="md" mx="auto">
+                        {searchTerm.trim() !== ""
+                          ? `We couldn't find any e-books matching "${searchTerm}". Try adjusting your search or browse by category.`
+                          : selectedCategory !== "all"
+                          ? "There are no e-books in this category yet. Check out other categories or come back later."
+                          : "No e-books are available at the moment. Please check back later or contact us for more information."}
+                      </Text>
+                    </VStack>
+                  </VStack>
+                </Box>
+              ) : (
+                <SimpleGrid
+                  columns={{ base: 1, md: 2, lg: 3 }}
+                  spacing={{ base: 8, md: 10, lg: 12 }}
+                  rowGap={{ base: 2, md: 2, lg: 2 }}
+                  columnGap={{ base: 2, md: 2, lg: 2 }}
+                >
+                  {ebooks.map((ebook) => {
+                    // Find category name
+                    const category = categories.find(
+                      (cat) => cat.$id === ebook.categorie
+                    );
+                    const categoryName = category
+                      ? category.name
+                      : "Uncategorized";
+                    const book = transformEbook(ebook, categoryName);
+                    return (
+                      <EBookItem
+                        key={ebook.$id}
+                        book={book}
+                        onClick={() => handleOpenModal(book)}
+                      />
+                    );
+                  })}
+                </SimpleGrid>
+              )}
 
-              {/* Static pagination placeholder */}
-              <HStack
-                justify="center"
-                spacing={6}
-                pt={8}
-                fontWeight="semibold"
-                color="gray.600"
-              >
-                <Button
-                  borderRadius="none"
-                  variant="outline"
-                  colorScheme="gray"
-                  isDisabled
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <HStack
+                  justify="center"
+                  spacing={6}
+                  pt={8}
+                  fontWeight="semibold"
+                  color="gray.600"
                 >
-                  Previous
-                </Button>
-                <Text>Page 1 of 3</Text>
-                <Button
-                  borderRadius="none"
-                  variant="outline"
-                  colorScheme="gray"
-                  isDisabled
-                >
-                  Next
-                </Button>
-              </HStack>
+                  <Button
+                    borderRadius="none"
+                    variant="outline"
+                    borderColor="gray.300"
+                    color="gray.700"
+                    _hover={{ bg: "gray.50", borderColor: brandGold }}
+                    isDisabled={currentPage === 1 || ebooksLoading}
+                    onClick={() =>
+                      setCurrentPage((prev) => Math.max(1, prev - 1))
+                    }
+                  >
+                    Previous
+                  </Button>
+                  <Text>
+                    Page {currentPage} of {totalPages} ({totalEbooks} e-books)
+                  </Text>
+                  <Button
+                    borderRadius="none"
+                    variant="outline"
+                    borderColor="gray.300"
+                    color="gray.700"
+                    _hover={{ bg: "gray.50", borderColor: brandGold }}
+                    isDisabled={currentPage === totalPages || ebooksLoading}
+                    onClick={() =>
+                      setCurrentPage((prev) => Math.min(totalPages, prev + 1))
+                    }
+                  >
+                    Next
+                  </Button>
+                </HStack>
+              )}
             </GridItem>
           </Grid>
         </Stack>
@@ -747,24 +951,6 @@ export default function EBookListPage() {
                   <Text color="gray.600" textAlign="justify">
                     {selectedBook.description}
                   </Text>
-                  <Flex
-                    gap={4}
-                    wrap="wrap"
-                    fontSize="xs"
-                    letterSpacing="widest"
-                    textTransform="uppercase"
-                    color="gray.600"
-                  >
-                    <Text fontWeight="semibold">
-                      Level: {selectedBook.level}
-                    </Text>
-                    <Text>|</Text>
-                    <Text fontWeight="semibold">
-                      Length: {selectedBook.length}
-                    </Text>
-                    <Text>|</Text>
-                    <Text fontWeight="semibold">Author: Coach Ayoub</Text>
-                  </Flex>
                   <Flex
                     w="full"
                     align="center"

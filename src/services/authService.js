@@ -201,12 +201,56 @@ export const logout = async () => {
 };
 
 /**
+ * Update phone number in Appwrite account
+ * Note: For OAuth users without password, this will fail silently
+ * @param {string} phoneNumber - Phone number to update
+ * @param {string} password - User password (required for email/password users)
+ * @returns {Promise<boolean>} True if update succeeded, false otherwise
+ */
+export const updateAccountPhone = async (phoneNumber, password = null) => {
+  try {
+    if (!phoneNumber || phoneNumber.trim() === "") {
+      return false;
+    }
+
+    // Clean phone number
+    let phoneClean = phoneNumber.trim();
+    if (!phoneClean.startsWith("+")) {
+      phoneClean = "+" + phoneClean;
+    }
+    const digitsOnly = phoneClean.substring(1).replace(/\D/g, "").substring(0, 15);
+    phoneClean = "+" + digitsOnly;
+
+    // Try to update phone in account
+    // For OAuth users without password, this will fail
+    if (password) {
+      try {
+        await account.updatePhone(phoneClean, password);
+        return true;
+      } catch (error) {
+        // Update failed, return false
+        console.warn("Failed to update phone in account:", error.message);
+        return false;
+      }
+    } else {
+      // No password provided (OAuth user), cannot update account phone
+      // Phone will only be stored in database collection
+      return false;
+    }
+  } catch (error) {
+    console.warn("Error updating account phone:", error.message);
+    return false;
+  }
+};
+
+/**
  * Ensures a user document exists in the users collection
  * Creates it if it doesn't exist, updates authMethod if needed
  * @param {string} authMethod - 'simple' for email/password, 'google' for OAuth
+ * @param {string} phoneNumber - Optional phone number to use (overrides user.phone from account)
  * @returns {Promise} Created or existing user document
  */
-export const ensureUserDocument = async (authMethod = "simple") => {
+export const ensureUserDocument = async (authMethod = "simple", phoneNumber = null) => {
   try {
     const databaseId = import.meta.env.VITE_APPWRITE_DATABASE_ID;
     const collectionId = "users";
@@ -222,6 +266,15 @@ export const ensureUserDocument = async (authMethod = "simple") => {
       return null;
     }
 
+    // Determine phone number: use provided phoneNumber, or user.phone, or empty string
+    // Clean the phone number: trim and ensure proper format
+    let finalPhoneNumber = "";
+    if (phoneNumber !== null && phoneNumber.trim() !== "") {
+      finalPhoneNumber = phoneNumber.trim();
+    } else if (user.phone && user.phone.trim() !== "") {
+      finalPhoneNumber = user.phone.trim();
+    }
+
     try {
       // Try to get existing document
       const existingDoc = await databases.getDocument(
@@ -230,12 +283,29 @@ export const ensureUserDocument = async (authMethod = "simple") => {
         user.$id
       );
 
+      // Prepare update data
+      const updateData = {};
+      let needsUpdate = false;
+
       // If document exists but doesn't have authMethod, update it
       if (!existingDoc.authMethod) {
+        updateData.authMethod = authMethod;
+        needsUpdate = true;
+      }
+
+      // If phoneNumber is provided and (different from existing OR existing is empty/missing), update it
+      if (phoneNumber !== null && phoneNumber.trim() !== "") {
+        const existingPhone = existingDoc.phoneNumber || "";
+        if (existingPhone.trim() !== phoneNumber.trim()) {
+          updateData.phoneNumber = phoneNumber.trim();
+          needsUpdate = true;
+        }
+      }
+
+      // If needs update, perform it
+      if (needsUpdate) {
         try {
-          await databases.updateDocument(databaseId, collectionId, user.$id, {
-            authMethod: authMethod,
-          });
+          await databases.updateDocument(databaseId, collectionId, user.$id, updateData);
           // Refresh the document to get updated data
           return await databases.getDocument(
             databaseId,
@@ -256,7 +326,7 @@ export const ensureUserDocument = async (authMethod = "simple") => {
         const userData = {
           fullName: user.name || user.email?.split("@")[0] || "User", // Required field
           email: user.email || "", // Required field
-          phoneNumber: user.phone || "", // Required field (collection uses phoneNumber, not phone)
+          phoneNumber: finalPhoneNumber, // Use the determined phone number
           authMethod: authMethod,
         };
 
@@ -268,7 +338,12 @@ export const ensureUserDocument = async (authMethod = "simple") => {
         );
         return newDoc;
       } catch (createError) {
-        throw createError;
+        // Log the error for debugging
+        console.error("Error creating user document:", createError);
+        // Re-throw with more context
+        throw new Error(
+          createError.message || "Failed to create user document in database"
+        );
       }
     }
   } catch (error) {
@@ -326,6 +401,20 @@ export const verifyEmail = async (userId, secret) => {
  */
 export const register = async ({ email, password, fullName, phone }) => {
   try {
+    // Clean and validate phone number if provided
+    let phoneClean = null;
+    if (phone && phone.trim() !== "") {
+      phoneClean = phone.trim();
+      // Ensure it starts with + and has max 15 digits
+      if (!phoneClean.startsWith("+")) {
+        // If user forgot the +, add it
+        phoneClean = "+" + phoneClean;
+      }
+      // Remove all non-digit characters except the leading +
+      const digitsOnly = phoneClean.substring(1).replace(/\D/g, "").substring(0, 15);
+      phoneClean = "+" + digitsOnly;
+    }
+
     // Step 1: Create the account (does not create session automatically)
     const user = await account.create("unique()", email, password, fullName);
 
@@ -339,18 +428,20 @@ export const register = async ({ email, password, fullName, phone }) => {
       );
     }
 
-    // Step 3: Update phone number if provided
-    if (phone) {
+    // Step 3: Update phone number in account if provided
+    if (phoneClean) {
       try {
-        await account.updatePhone(phone, password);
+        await account.updatePhone(phoneClean, password);
       } catch (phoneError) {
         // Phone update is optional, fail silently
+        // We'll still save it in the document even if account update fails
       }
     }
 
     // Step 4: Insert user data in users collection with authMethod: 'simple'
+    // Pass phone number directly to ensure it's saved in the document
     try {
-      await ensureUserDocument("simple");
+      await ensureUserDocument("simple", phoneClean);
     } catch (docError) {
       // If document creation fails, delete session and account, then throw error
       try {

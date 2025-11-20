@@ -12,6 +12,7 @@ dist
 dist-ssr
 *.local
 index.txt
+test_data.json
 # Editor directories and files
 .env
 .vscode/*

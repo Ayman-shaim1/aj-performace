@@ -64,7 +64,7 @@ export default function AdminSidebar() {
   };
 
   return (
-    <Box w={{ base: "70px", lg: "280px" }} bg={"gray.700"} zIndex={1000} p={0}>
+    <Box w={{ base: "70px", lg: "280px" }} bg={"gray.700"} zIndex={1000} p={0} overflow="visible">
       <VStack h="100%" w="100%" align="stretch" p={0}>
         {/* Logo/Header Section */}
         <Box
@@ -88,7 +88,7 @@ export default function AdminSidebar() {
                   onMouseLeave={() => setHoveredItem(null)}
                 >
                   {showTooltips ? (
-                    <TooltipRoot openDelay={300}>
+                    <TooltipRoot openDelay={100} positioning={{ placement: "right" }}>
                       <TooltipTrigger asChild>
                         <Button
                           onClick={() => handleNavigation(item.path)}
@@ -121,7 +121,7 @@ export default function AdminSidebar() {
                           </Text>
                         </Button>
                       </TooltipTrigger>
-                      <TooltipPositioner>
+                      <TooltipPositioner positioning={{ placement: "right" }}>
                         <TooltipContent>{item.label}</TooltipContent>
                       </TooltipPositioner>
                     </TooltipRoot>
@@ -171,8 +171,8 @@ export default function AdminSidebar() {
           onMouseEnter={() => setHoveredItem("logout")}
           onMouseLeave={() => setHoveredItem(null)}
         >
-          {showTooltips ? (
-            <TooltipRoot openDelay={300}>
+          {showTooltips ? ( 
+            <TooltipRoot openDelay={100} positioning={{ placement: "right" }}>
               <TooltipTrigger asChild>
                 <Button
                   onClick={handleLogout}
@@ -202,7 +202,7 @@ export default function AdminSidebar() {
                   </Text>
                 </Button>
               </TooltipTrigger>
-              <TooltipPositioner>
+              <TooltipPositioner positioning={{ placement: "right" }}>
                 <TooltipContent>Logout</TooltipContent>
               </TooltipPositioner>
             </TooltipRoot>

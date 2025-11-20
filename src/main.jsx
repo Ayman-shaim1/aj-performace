@@ -51,22 +51,25 @@ createRoot(document.getElementById("root")).render(
               bg={colors.bg}
               color={colors.textColor}
               borderRadius="none"
-              boxShadow="xl"
+              boxShadow="lg"
               p={4}
-              minW="260px"
+              minW="280px"
               maxW="600px"
             >
-              <Flex gap={3} align="center" justify="space-between">
-                <Flex gap={3} align="center" flex="1">
-                  <ToastIndicator fontSize="md" />
-                  <Box>
-                    {toast.title && (
+              <Flex gap={3} align="flex-start" justify="space-between">
+                <Flex gap={3} align="flex-start" flex="1">
+                  <ToastIndicator 
+                    fontSize="lg" 
+                    mt={toast.description && !toast.title ? 0.5 : 0}
+                  />
+                  <Box flex="1">
+                    {toast.title && toast.title.trim() !== "" && (
                       <ToastTitle 
-                        fontWeight="medium" 
-                        fontSize="md" 
-                        mb={toast.description ? 2 : 0}
+                        fontWeight="semibold" 
+                        fontSize="sm" 
+                        mb={toast.description ? 1 : 0}
                         color={colors.textColor}
-                        lineHeight="1.5"
+                        lineHeight="1.4"
                       >
                         {toast.title}
                       </ToastTitle>
@@ -74,20 +77,31 @@ createRoot(document.getElementById("root")).render(
                     {toast.description && (
                       <ToastDescription 
                         fontSize="sm" 
-                        color={colors.descColor}
+                        color={colors.descColor || colors.textColor}
                         lineHeight="1.5"
                         opacity={1}
-                        fontWeight="normal"
+                        fontWeight={toast.title && toast.title.trim() !== "" ? "normal" : "medium"}
                       >
                         {toast.description}
                       </ToastDescription>
+                    )}
+                    {!toast.description && toast.title && (
+                      <ToastTitle 
+                        fontWeight="medium" 
+                        fontSize="sm" 
+                        color={colors.textColor}
+                        lineHeight="1.5"
+                      >
+                        {toast.title}
+                      </ToastTitle>
                     )}
                   </Box>
                 </Flex>
                 <ToastCloseTrigger 
                   color={colors.textColor}
-                  _hover={{ opacity: 0.8 }}
+                  _hover={{ opacity: 0.7 }}
                   size="sm"
+                  opacity={0.8}
                 />
               </Flex>
             </ToastRoot>

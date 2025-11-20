@@ -60,8 +60,25 @@ export const showToast = ({
 export const showSuccessToast = (title, description, options = {}) =>
   showToast({ title, description, type: "success", ...options });
 
-export const showErrorToast = (title, description, options = {}) =>
-  showToast({ title, description, type: "error", ...options });
+export const showErrorToast = (title, description, options = {}) => {
+  // If title is empty, use description as the only content (no title)
+  if (!title || title.trim() === "") {
+    return showToast({ 
+      title: description || "An error occurred", 
+      description: undefined, 
+      type: "error", 
+      duration: 5000, // Longer duration for errors
+      ...options 
+    });
+  }
+  return showToast({ 
+    title, 
+    description, 
+    type: "error", 
+    duration: 5000, // Longer duration for errors
+    ...options 
+  });
+};
 
 export const showWarningToast = (title, description, options = {}) =>
   showToast({ title, description, type: "warning", ...options });

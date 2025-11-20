@@ -94,7 +94,7 @@ export default function LoginPage() {
   };
 
   const handleGoogleLogin = () => {
-    const successUrl = buildUrl("/e-books");
+    const successUrl = buildUrl("/complete-profile");
     const failureUrl = buildUrl("/login");
     loginWithGoogle(successUrl, failureUrl);
   };
