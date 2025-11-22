@@ -4,11 +4,13 @@ import {
   Container,
   Flex,
   Heading,
+  Image,
   Stack,
   Text,
   chakra,
 } from "@chakra-ui/react";
-import { brandGold } from "../../theme/colors";
+import { brandGold, bgColor } from "../../theme/colors";
+import heroImage from "../../assets/images/hero-image.jpg";
 
 export default function HeroSection({ sectionRef }) {
   return (
@@ -16,7 +18,7 @@ export default function HeroSection({ sectionRef }) {
       ref={sectionRef}
       as="section"
       id="hero"
-      bg="gray.900"
+      bg={bgColor}
       minH="100vh"
       py={{ base: 20, md: 24 }}
       display="flex"
@@ -29,7 +31,7 @@ export default function HeroSection({ sectionRef }) {
           justify="center"
           gap={{ base: 10, md: 16 }}
         >
-          <Box
+          {/* <Box
             flex="1"
             minH={{ base: "14rem", md: "18rem" }}
             w="full"
@@ -44,7 +46,17 @@ export default function HeroSection({ sectionRef }) {
             fontWeight="medium"
           >
             Image Placeholder
-          </Box>
+          </Box> */}
+          <Image
+            src={heroImage} 
+            alt="Hero Image"
+            flex="1"
+            maxW={{ base: "100%", md: "470px" }}
+            borderRadius="none"
+            // border="1px solid"
+            // borderColor={brandGold}
+          />
+
           <Flex
             flex="1"
             direction="column"

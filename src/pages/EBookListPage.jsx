@@ -943,7 +943,7 @@ export default function EBookListPage() {
                     src={selectedBook.cover}
                     alt={selectedBook.title}
                     w="full"
-                    h={{ base: "220px", md: "260px" }}
+                    h={{ base: "220px", md: "500px" }}
                     objectFit="cover"
                     border="1px solid"
                     borderColor="gray.200"

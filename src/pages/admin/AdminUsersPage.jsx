@@ -17,7 +17,7 @@ import {
   FiChevronLeft,
   FiChevronRight,
 } from "react-icons/fi";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { brandGold } from "../../theme/colors";
 import { getUsers } from "../../services/userService";
 import { showErrorToast } from "../../utils/toast";
@@ -33,6 +33,7 @@ export default function AdminUsersPage() {
   const limit = 25;
   const showPhoneColumn = useBreakpointValue({ base: false, md: true });
   const showAuthMethodColumn = useBreakpointValue({ base: false, md: true });
+  const isFirstMount = useRef(true);
 
   const fetchUsers = async () => {
     try {
@@ -61,10 +62,19 @@ export default function AdminUsersPage() {
 
   useEffect(() => {
     fetchUsers();
+    // Mark that initial mount is complete after first fetch
+    if (isFirstMount.current) {
+      isFirstMount.current = false;
+    }
   }, [currentPage, adminFilter]);
 
   // Debounce search
   useEffect(() => {
+    // Skip on initial mount to avoid double fetch
+    if (isFirstMount.current) {
+      return;
+    }
+
     const timer = setTimeout(() => {
       if (currentPage === 1) {
         fetchUsers();

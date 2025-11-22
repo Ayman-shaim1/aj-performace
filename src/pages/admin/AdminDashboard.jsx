@@ -1,3 +1,4 @@
+import React from "react";
 import {
   Box,
   Container,
@@ -7,16 +8,11 @@ import {
   HStack,
   SimpleGrid,
 } from "@chakra-ui/react";
-import { FiUsers, FiBook, FiBarChart2, FiDollarSign } from "react-icons/fi";
-import { useAuth } from "../../hooks/useAuth";
-import { brandGold } from "../../theme/colors";
 import {
-  LineChart,
-  Line,
-  AreaChart,
-  Area,
   BarChart,
   Bar,
+  LineChart,
+  Line,
   PieChart,
   Pie,
   Cell,
@@ -27,151 +23,58 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
+import { FiBarChart2, FiTrendingUp, FiUsers, FiBook } from "react-icons/fi";
+import { brandGold } from "../../theme/colors";
 
 export default function AdminDashboard() {
-  const { currentUser } = useAuth();
-
-  // Static data for charts
-  const userGrowthData = [
-    { month: "Jan", users: 120 },
-    { month: "Feb", users: 180 },
-    { month: "Mar", users: 240 },
-    { month: "Apr", users: 320 },
-    { month: "May", users: 410 },
-    { month: "Jun", users: 520 },
-    { month: "Jul", users: 650 },
-    { month: "Aug", users: 780 },
-    { month: "Sep", users: 920 },
-    { month: "Oct", users: 1100 },
-    { month: "Nov", users: 1280 },
-    { month: "Dec", users: 1450 },
+  // Fake static data for charts
+  const barChartData = [
+    { name: "Jan", value: 400 },
+    { name: "Feb", value: 300 },
+    { name: "Mar", value: 500 },
+    { name: "Apr", value: 450 },
+    { name: "May", value: 600 },
+    { name: "Jun", value: 550 },
   ];
 
-  const ebookPerformanceData = [
-    { name: "Fitness Basics", sales: 245, views: 3200 },
-    { name: "Nutrition Guide", sales: 189, views: 2800 },
-    { name: "Strength Training", sales: 312, views: 4100 },
-    { name: "Cardio Mastery", sales: 156, views: 2100 },
-    { name: "Yoga Fundamentals", sales: 278, views: 3500 },
-    { name: "Recovery Methods", sales: 134, views: 1800 },
+  const lineChartData = [
+    { name: "Week 1", users: 120, downloads: 80 },
+    { name: "Week 2", users: 190, downloads: 120 },
+    { name: "Week 3", users: 300, downloads: 180 },
+    { name: "Week 4", users: 280, downloads: 200 },
+    { name: "Week 5", users: 390, downloads: 250 },
   ];
 
-  const revenueData = [
-    { month: "Jan", revenue: 2400 },
-    { month: "Feb", revenue: 3800 },
-    { month: "Mar", revenue: 5200 },
-    { month: "Apr", revenue: 6800 },
-    { month: "May", revenue: 8500 },
-    { month: "Jun", revenue: 10200 },
-    { month: "Jul", revenue: 12400 },
-    { month: "Aug", revenue: 14800 },
-    { month: "Sep", revenue: 17200 },
-    { month: "Oct", revenue: 19800 },
-    { month: "Nov", revenue: 22800 },
-    { month: "Dec", revenue: 26000 },
+  const pieChartData = [
+    { name: "E-Books", value: 35 },
+    { name: "Courses", value: 25 },
+    { name: "Consulting", value: 20 },
+    { name: "Other", value: 20 },
   ];
 
-  const userDistributionData = [
-    { name: "Free Tier", value: 850, color: "#718096" },
-    { name: "Premium", value: 420, color: "#D4AF37" },
-    { name: "Enterprise", value: 180, color: "#2D3748" },
-  ];
-
-  const COLORS = ["#718096", "#D4AF37", "#2D3748"];
-
-  const stats = [
-    {
-      label: "Total Users",
-      value: "1,450",
-      change: "+12.5%",
-      icon: FiUsers,
-      trend: "up",
-    },
-    {
-      label: "E-Books",
-      value: "24",
-      change: "+3 this month",
-      icon: FiBook,
-      trend: "up",
-    },
-    {
-      label: "Total Revenue",
-      value: "$26,000",
-      change: "+18.2%",
-      icon: FiDollarSign,
-      trend: "up",
-    },
-    {
-      label: "Growth Rate",
-      value: "23.4%",
-      change: "+4.1%",
-      icon: FiBarChart2,
-      trend: "up",
-    },
-  ];
+  const COLORS = [brandGold, "#805AD5", "#3182CE", "#38A169"];
 
   return (
     <Box bg="gray.50" minH="100vh" py={8}>
       <Container maxW="7xl">
         <VStack spacing={8} align="stretch">
           {/* Header */}
-          <VStack align="start" spacing={1}>
-            <Heading size="xl" color="gray.900">
-              Dashboard
-            </Heading>
-            <Text color="gray.600">
-              Welcome back, {currentUser?.name || currentUser?.email || "Admin"}
-            </Text>
-          </VStack>
+          <HStack spacing={4}>
+            <Box color={brandGold} fontSize="3xl">
+              <FiBarChart2 />
+            </Box>
+            <VStack align="start" spacing={1}>
+              <Heading size="xl" color="gray.900">
+                Dashboard
+              </Heading>
+              <Text color="gray.600">
+                Overview of your platform performance
+              </Text>
+            </VStack>
+          </HStack>
 
           {/* Stats Cards */}
           <SimpleGrid columns={{ base: 1, md: 2, lg: 4 }} spacing={6}>
-            {stats.map((stat, index) => {
-              const IconComponent = stat.icon;
-              return (
-                <Box
-                  key={index}
-                  borderRadius="none"
-                  border="1px solid"
-                  borderColor="gray.200"
-                  p={6}
-                  bg="white"
-                  _hover={{
-                    borderColor: brandGold,
-                    boxShadow: "0 4px 12px rgba(212, 175, 55, 0.1)",
-                  }}
-                  transition="all 0.2s"
-                >
-                  <VStack align="start" spacing={3}>
-                    <HStack justify="space-between" w="100%">
-                      <Box color={brandGold} fontSize="2xl">
-                        <IconComponent />
-                      </Box>
-                      <Text
-                        fontSize="xs"
-                        color={stat.trend === "up" ? "green.500" : "red.500"}
-                        fontWeight="medium"
-                      >
-                        {stat.change}
-                      </Text>
-                    </HStack>
-                    <VStack align="start" spacing={0}>
-                      <Text fontSize="sm" color="gray.600" fontWeight="medium">
-                        {stat.label}
-                      </Text>
-                      <Heading size="2xl" color="gray.900">
-                        {stat.value}
-                      </Heading>
-                    </VStack>
-                  </VStack>
-                </Box>
-              );
-            })}
-          </SimpleGrid>
-
-          {/* Charts Row 1: User Growth & Revenue */}
-          <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={6}>
-            {/* User Growth Line Chart */}
             <Box
               borderRadius="none"
               border="1px solid"
@@ -179,54 +82,24 @@ export default function AdminDashboard() {
               p={6}
               bg="white"
             >
-              <VStack align="start" spacing={4}>
-                <VStack align="start" spacing={1}>
-                  <Heading size="md" color="gray.900">
-                    User Growth
-                  </Heading>
-                  <Text fontSize="sm" color="gray.600">
-                    Monthly user acquisition trend
+              <VStack align="start" spacing={2}>
+                <HStack>
+                  <Box color={brandGold} fontSize="2xl">
+                    <FiTrendingUp />
+                  </Box>
+                  <Text fontSize="sm" color="gray.600" fontWeight="medium">
+                    Total Revenue
                   </Text>
-                </VStack>
-                <Box w="100%" h="300px">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={userGrowthData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
-                      <XAxis
-                        dataKey="month"
-                        stroke="#718096"
-                        fontSize={12}
-                        tickLine={false}
-                      />
-                      <YAxis
-                        stroke="#718096"
-                        fontSize={12}
-                        tickLine={false}
-                      />
-                      <Tooltip
-                        contentStyle={{
-                          backgroundColor: "white",
-                          border: "1px solid #E2E8F0",
-                          borderRadius: "4px",
-                        }}
-                      />
-                      <Legend wrapperStyle={{ fontSize: "12px" }} />
-                      <Line
-                        type="monotone"
-                        dataKey="users"
-                        stroke={brandGold}
-                        strokeWidth={3}
-                        dot={{ fill: brandGold, r: 4 }}
-                        activeDot={{ r: 6 }}
-                        name="Total Users"
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </Box>
+                </HStack>
+                <Heading size="2xl" color="gray.900">
+                  $12,450
+                </Heading>
+                <Text fontSize="xs" color="green.500">
+                  +12.5% from last month
+                </Text>
               </VStack>
             </Box>
 
-            {/* Revenue Area Chart */}
             <Box
               borderRadius="none"
               border="1px solid"
@@ -234,64 +107,78 @@ export default function AdminDashboard() {
               p={6}
               bg="white"
             >
-              <VStack align="start" spacing={4}>
-                <VStack align="start" spacing={1}>
-                  <Heading size="md" color="gray.900">
-                    Revenue Trend
-                  </Heading>
-                  <Text fontSize="sm" color="gray.600">
-                    Monthly revenue in USD
+              <VStack align="start" spacing={2}>
+                <HStack>
+                  <Box color={brandGold} fontSize="2xl">
+                    <FiUsers />
+                  </Box>
+                  <Text fontSize="sm" color="gray.600" fontWeight="medium">
+                    Active Users
                   </Text>
-                </VStack>
-                <Box w="100%" h="300px">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={revenueData}>
-                      <defs>
-                        <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor={brandGold} stopOpacity={0.3} />
-                          <stop offset="95%" stopColor={brandGold} stopOpacity={0} />
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
-                      <XAxis
-                        dataKey="month"
-                        stroke="#718096"
-                        fontSize={12}
-                        tickLine={false}
-                      />
-                      <YAxis
-                        stroke="#718096"
-                        fontSize={12}
-                        tickLine={false}
-                      />
-                      <Tooltip
-                        contentStyle={{
-                          backgroundColor: "white",
-                          border: "1px solid #E2E8F0",
-                          borderRadius: "4px",
-                        }}
-                        formatter={(value) => `$${value.toLocaleString()}`}
-                      />
-                      <Legend wrapperStyle={{ fontSize: "12px" }} />
-                      <Area
-                        type="monotone"
-                        dataKey="revenue"
-                        stroke={brandGold}
-                        strokeWidth={2}
-                        fillOpacity={1}
-                        fill="url(#colorRevenue)"
-                        name="Revenue"
-                      />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </Box>
+                </HStack>
+                <Heading size="2xl" color="gray.900">
+                  1,234
+                </Heading>
+                <Text fontSize="xs" color="green.500">
+                  +8.2% from last month
+                </Text>
+              </VStack>
+            </Box>
+
+            <Box
+              borderRadius="none"
+              border="1px solid"
+              borderColor="gray.200"
+              p={6}
+              bg="white"
+            >
+              <VStack align="start" spacing={2}>
+                <HStack>
+                  <Box color={brandGold} fontSize="2xl">
+                    <FiBook />
+                  </Box>
+                  <Text fontSize="sm" color="gray.600" fontWeight="medium">
+                    Total E-Books
+                  </Text>
+                </HStack>
+                <Heading size="2xl" color="gray.900">
+                  48
+                </Heading>
+                <Text fontSize="xs" color="green.500">
+                  +3 new this month
+                </Text>
+              </VStack>
+            </Box>
+
+            <Box
+              borderRadius="none"
+              border="1px solid"
+              borderColor="gray.200"
+              p={6}
+              bg="white"
+            >
+              <VStack align="start" spacing={2}>
+                <HStack>
+                  <Box color={brandGold} fontSize="2xl">
+                    <FiTrendingUp />
+                  </Box>
+                  <Text fontSize="sm" color="gray.600" fontWeight="medium">
+                    Downloads
+                  </Text>
+                </HStack>
+                <Heading size="2xl" color="gray.900">
+                  2,890
+                </Heading>
+                <Text fontSize="xs" color="green.500">
+                  +15.3% from last month
+                </Text>
               </VStack>
             </Box>
           </SimpleGrid>
 
-          {/* Charts Row 2: E-Book Performance & User Distribution */}
+          {/* Charts Grid */}
           <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={6}>
-            {/* E-Book Performance Bar Chart */}
+            {/* Bar Chart */}
             <Box
               borderRadius="none"
               border="1px solid"
@@ -300,56 +187,24 @@ export default function AdminDashboard() {
               bg="white"
             >
               <VStack align="start" spacing={4}>
-                <VStack align="start" spacing={1}>
-                  <Heading size="md" color="gray.900">
-                    E-Book Performance
-                  </Heading>
-                  <Text fontSize="sm" color="gray.600">
-                    Sales and views by title
-                  </Text>
-                </VStack>
-                <Box w="100%" h="350px">
+                <Heading size="md" color="gray.900">
+                  Monthly Sales
+                </Heading>
+                <Box w="100%" h="300px">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={ebookPerformanceData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
-                      <XAxis
-                        dataKey="name"
-                        stroke="#718096"
-                        fontSize={11}
-                        tickLine={false}
-                        angle={-45}
-                        textAnchor="end"
-                        height={100}
-                      />
-                      <YAxis stroke="#718096" fontSize={12} tickLine={false} />
-                      <Tooltip
-                        contentStyle={{
-                          backgroundColor: "white",
-                          border: "1px solid #E2E8F0",
-                          borderRadius: "4px",
-                        }}
-                      />
-                      <Legend wrapperStyle={{ fontSize: "12px" }} />
-                      <Bar
-                        dataKey="sales"
-                        fill={brandGold}
-                        radius={[4, 4, 0, 0]}
-                        name="Sales"
-                      />
-                      <Bar
-                        dataKey="views"
-                        fill="#718096"
-                        radius={[4, 4, 0, 0]}
-                        name="Views"
-                        opacity={0.7}
-                      />
+                    <BarChart data={barChartData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="name" />
+                      <YAxis />
+                      <Tooltip />
+                      <Bar dataKey="value" fill={brandGold} />
                     </BarChart>
                   </ResponsiveContainer>
                 </Box>
               </VStack>
             </Box>
 
-            {/* User Distribution Pie Chart */}
+            {/* Line Chart */}
             <Box
               borderRadius="none"
               border="1px solid"
@@ -358,56 +213,78 @@ export default function AdminDashboard() {
               bg="white"
             >
               <VStack align="start" spacing={4}>
-                <VStack align="start" spacing={1}>
-                  <Heading size="md" color="gray.900">
-                    User Distribution
-                  </Heading>
-                  <Text fontSize="sm" color="gray.600">
-                    Users by subscription tier
-                  </Text>
-                </VStack>
-                <Box w="100%" h="350px">
+                <Heading size="md" color="gray.900">
+                  Weekly Growth
+                </Heading>
+                <Box w="100%" h="300px">
                   <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={userDistributionData}
-                        cx="50%"
-                        cy="50%"
-                        labelLine={false}
-                        label={({ name, percent }) =>
-                          `${name}: ${(percent * 100).toFixed(0)}%`
-                        }
-                        outerRadius={100}
-                        fill="#8884d8"
-                        dataKey="value"
-                      >
-                        {userDistributionData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
-                        ))}
-                      </Pie>
-                      <Tooltip
-                        contentStyle={{
-                          backgroundColor: "white",
-                          border: "1px solid #E2E8F0",
-                          borderRadius: "4px",
-                        }}
-                        formatter={(value) => `${value} users`}
+                    <LineChart data={lineChartData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="name" />
+                      <YAxis />
+                      <Tooltip />
+                      <Legend />
+                      <Line
+                        type="monotone"
+                        dataKey="users"
+                        stroke={brandGold}
+                        strokeWidth={2}
+                        name="Users"
                       />
-                      <Legend
-                        wrapperStyle={{ fontSize: "12px" }}
-                        formatter={(value) => {
-                          const data = userDistributionData.find(
-                            (d) => d.name === value
-                          );
-                          return `${value} (${data?.value} users)`;
-                        }}
+                      <Line
+                        type="monotone"
+                        dataKey="downloads"
+                        stroke="#805AD5"
+                        strokeWidth={2}
+                        name="Downloads"
                       />
-                    </PieChart>
+                    </LineChart>
                   </ResponsiveContainer>
                 </Box>
               </VStack>
             </Box>
           </SimpleGrid>
+
+          {/* Pie Chart */}
+          <Box
+            borderRadius="none"
+            border="1px solid"
+            borderColor="gray.200"
+            p={6}
+            bg="white"
+          >
+            <VStack align="start" spacing={4}>
+              <Heading size="md" color="gray.900">
+                Revenue by Category
+              </Heading>
+              <Box w="100%" h="300px" display="flex" justifyContent="center">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={pieChartData}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={({ name, percent }) =>
+                        `${name} ${(percent * 100).toFixed(0)}%`
+                      }
+                      outerRadius={100}
+                      fill="#8884d8"
+                      dataKey="value"
+                    >
+                      {pieChartData.map((entry, index) => (
+                        <Cell
+                          key={`cell-${index}`}
+                          fill={COLORS[index % COLORS.length]}
+                        />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              </Box>
+            </VStack>
+          </Box>
         </VStack>
       </Container>
     </Box>

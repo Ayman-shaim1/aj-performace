@@ -30,8 +30,10 @@ import {
   FiUpload,
   FiImage,
   FiLayers,
+  FiChevronLeft,
+  FiChevronRight,
 } from "react-icons/fi";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { brandGold } from "../../theme/colors";
 import {
   getCategories,
@@ -54,6 +56,55 @@ import {
 import { showErrorToast, showSuccessToast } from "../../utils/toast";
 import InputText from "../../components/InputText";
 
+// Table styles constants - Réutilisables pour éviter la redéfinition
+const BORDER_COLOR = "#E2E8F0";
+const TABLE_STYLES = {
+  border: `1px solid ${BORDER_COLOR}`,
+  padding: "16px",
+  borderCollapse: "collapse",
+};
+
+const TABLE_HEADER_STYLES = {
+  ...TABLE_STYLES,
+  backgroundColor: "#F7FAFC",
+  textAlign: "left",
+  fontWeight: 600,
+  fontSize: "12px",
+  textTransform: "uppercase",
+  color: "#4A5568",
+};
+
+const TABLE_CELL_STYLES = {
+  ...TABLE_STYLES,
+  color: "#1A202C",
+  fontWeight: 500,
+};
+
+const TABLE_CELL_EMPTY_STYLES = {
+  ...TABLE_STYLES,
+};
+
+const TABLE_ROW_HOVER_BG = "#F7FAFC";
+
+// Image styles constants
+const IMAGE_STYLES = {
+  objectFit: "cover",
+  border: TABLE_STYLES.border,
+};
+
+const IMAGE_TABLE_STYLES = {
+  ...IMAGE_STYLES,
+  width: "60px",
+  height: "60px",
+};
+
+const IMAGE_MOBILE_STYLES = {
+  ...IMAGE_STYLES,
+  width: "80px",
+  height: "80px",
+  flexShrink: 0,
+};
+
 export default function AdminEBooksPage() {
   // Categories state
   const [categories, setCategories] = useState([]);
@@ -62,6 +113,11 @@ export default function AdminEBooksPage() {
   const [editingCategory, setEditingCategory] = useState(null);
   const [categorySearchTerm, setCategorySearchTerm] = useState("");
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+  const [currentCategoryPage, setCurrentCategoryPage] = useState(1);
+  const [totalCategories, setTotalCategories] = useState(0);
+  const [totalCategoryPages, setTotalCategoryPages] = useState(1);
+  const categoryLimit = 25;
+  const isFirstCategoryMount = useRef(true);
 
   // E-books state
   const [ebooks, setEbooks] = useState([]);
@@ -80,20 +136,37 @@ export default function AdminEBooksPage() {
   const [uploadingImage, setUploadingImage] = useState(false);
   const [isEbookModalOpen, setIsEbookModalOpen] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [currentEbookPage, setCurrentEbookPage] = useState(1);
+  const [totalEbooks, setTotalEbooks] = useState(0);
+  const [totalEbookPages, setTotalEbookPages] = useState(1);
+  const ebookLimit = 25;
+  const isFirstEbookMount = useRef(true);
+
+  // Delete confirmation dialogs state
+  const [isDeleteCategoryDialogOpen, setIsDeleteCategoryDialogOpen] =
+    useState(false);
+  const [categoryToDelete, setCategoryToDelete] = useState(null);
+  const [isDeleteEbookDialogOpen, setIsDeleteEbookDialogOpen] = useState(false);
+  const [ebookToDelete, setEbookToDelete] = useState(null);
 
   // Fetch categories
   const fetchCategories = async () => {
     try {
       setCategoriesLoading(true);
+      const offset = (currentCategoryPage - 1) * categoryLimit;
       const result = await getCategories({
-        limit: 100,
-        offset: 0,
+        limit: categoryLimit,
+        offset: offset,
         searchTerm: categorySearchTerm,
       });
       setCategories(result.categories);
+      setTotalCategories(result.total);
+      setTotalCategoryPages(Math.ceil(result.total / categoryLimit));
     } catch (error) {
       showErrorToast("", error.message || "Failed to fetch categories");
       setCategories([]);
+      setTotalCategories(0);
+      setTotalCategoryPages(1);
     } finally {
       setCategoriesLoading(false);
     }
@@ -113,30 +186,93 @@ export default function AdminEBooksPage() {
   const fetchEBooks = async () => {
     try {
       setEbooksLoading(true);
+      const offset = (currentEbookPage - 1) * ebookLimit;
       const categoryId =
         selectedCategoryFilter === "all" ? null : selectedCategoryFilter;
       const result = await getEBooks({
-        limit: 100,
-        offset: 0,
+        limit: ebookLimit,
+        offset: offset,
         searchTerm: ebookSearchTerm,
         categoryId,
       });
       setEbooks(result.ebooks);
+      setTotalEbooks(result.total);
+      setTotalEbookPages(Math.ceil(result.total / ebookLimit));
     } catch (error) {
       showErrorToast("", error.message || "Failed to fetch e-books");
       setEbooks([]);
+      setTotalEbooks(0);
+      setTotalEbookPages(1);
     } finally {
       setEbooksLoading(false);
     }
   };
 
+  // Fetch categories when page changes
   useEffect(() => {
     fetchCategories();
+  }, [currentCategoryPage]);
+
+  // Debounce category search and reset to page 1
+  useEffect(() => {
+    // Skip on initial mount to avoid double fetch
+    if (isFirstCategoryMount.current) {
+      isFirstCategoryMount.current = false;
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      if (currentCategoryPage === 1) {
+        fetchCategories();
+      } else {
+        setCurrentCategoryPage(1);
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
   }, [categorySearchTerm]);
 
+  // Fetch e-books when page changes
   useEffect(() => {
     fetchEBooks();
-  }, [ebookSearchTerm, selectedCategoryFilter]);
+    // Mark that initial mount is complete after first fetch
+    if (isFirstEbookMount.current) {
+      isFirstEbookMount.current = false;
+    }
+  }, [currentEbookPage]);
+
+  // Reset ebook page when category filter changes
+  useEffect(() => {
+    // Skip on initial mount to avoid double fetch with initial ebook fetch
+    if (isFirstEbookMount.current) {
+      return;
+    }
+    // If page is already 1, fetch directly. Otherwise, setting page to 1 will trigger fetch.
+    if (currentEbookPage === 1) {
+      fetchEBooks();
+    } else {
+      setCurrentEbookPage(1);
+    }
+  }, [selectedCategoryFilter]);
+
+  // Debounce ebook search and reset to page 1
+  useEffect(() => {
+    // Skip on initial mount to avoid double fetch
+    if (isFirstEbookMount.current) {
+      isFirstEbookMount.current = false;
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      if (currentEbookPage === 1) {
+        fetchEBooks();
+      } else {
+        setCurrentEbookPage(1);
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [ebookSearchTerm]);
 
   // Category handlers
   const handleCategorySubmit = async (e) => {
@@ -164,17 +300,27 @@ export default function AdminEBooksPage() {
     setIsCategoryModalOpen(true);
   };
 
-  const handleCategoryDelete = async (categoryId) => {
-    if (!window.confirm("Are you sure you want to delete this category?")) {
-      return;
-    }
+  const handleCategoryDelete = (category) => {
+    setCategoryToDelete(category);
+    setIsDeleteCategoryDialogOpen(true);
+  };
+
+  const confirmCategoryDelete = async () => {
+    if (!categoryToDelete) return;
     try {
-      await deleteCategory(categoryId);
+      await deleteCategory(categoryToDelete.$id);
       showSuccessToast("Success", "Category deleted successfully");
+      setIsDeleteCategoryDialogOpen(false);
+      setCategoryToDelete(null);
       fetchCategories();
     } catch (error) {
       showErrorToast("", error.message || "Failed to delete category");
     }
+  };
+
+  const cancelCategoryDelete = () => {
+    setIsDeleteCategoryDialogOpen(false);
+    setCategoryToDelete(null);
   };
 
   const handleCategoryCancel = () => {
@@ -331,25 +477,35 @@ export default function AdminEBooksPage() {
     setIsEbookModalOpen(true);
   };
 
-  const handleEbookDelete = async (ebookId, imageId) => {
-    if (!window.confirm("Are you sure you want to delete this e-book?")) {
-      return;
-    }
+  const handleEbookDelete = (ebook) => {
+    setEbookToDelete(ebook);
+    setIsDeleteEbookDialogOpen(true);
+  };
+
+  const confirmEbookDelete = async () => {
+    if (!ebookToDelete) return;
     try {
-      await deleteEBook(ebookId);
+      await deleteEBook(ebookToDelete.$id);
       // Delete the associated image
-      if (imageId) {
+      if (ebookToDelete.image) {
         try {
-          await deleteImage(imageId);
+          await deleteImage(ebookToDelete.image);
         } catch (error) {
           console.error("Failed to delete image:", error);
         }
       }
       showSuccessToast("Success", "E-book deleted successfully");
+      setIsDeleteEbookDialogOpen(false);
+      setEbookToDelete(null);
       fetchEBooks();
     } catch (error) {
       showErrorToast("", error.message || "Failed to delete e-book");
     }
+  };
+
+  const cancelEbookDelete = () => {
+    setIsDeleteEbookDialogOpen(false);
+    setEbookToDelete(null);
   };
 
   const handleEbookCancel = () => {
@@ -365,6 +521,32 @@ export default function AdminEBooksPage() {
     setIsEbookModalOpen(false);
   };
 
+  // Category pagination handlers
+  const handleCategoryPreviousPage = () => {
+    if (currentCategoryPage > 1) {
+      setCurrentCategoryPage(currentCategoryPage - 1);
+    }
+  };
+
+  const handleCategoryNextPage = () => {
+    if (currentCategoryPage < totalCategoryPages) {
+      setCurrentCategoryPage(currentCategoryPage + 1);
+    }
+  };
+
+  // E-book pagination handlers
+  const handleEbookPreviousPage = () => {
+    if (currentEbookPage > 1) {
+      setCurrentEbookPage(currentEbookPage - 1);
+    }
+  };
+
+  const handleEbookNextPage = () => {
+    if (currentEbookPage < totalEbookPages) {
+      setCurrentEbookPage(currentEbookPage + 1);
+    }
+  };
+
   return (
     <Box bg="gray.50" minH="100vh" py={{ base: 4, md: 8 }}>
       <Container maxW="7xl" px={{ base: 4, md: 6 }}>
@@ -375,7 +557,11 @@ export default function AdminEBooksPage() {
               <FiLayers />
             </Box>
             <VStack align="start" spacing={2} flex={1}>
-              <Heading size={{ base: "lg", md: "xl" }} color="gray.900" fontWeight="bold">
+              <Heading
+                size={{ base: "lg", md: "xl" }}
+                color="gray.900"
+                fontWeight="bold"
+              >
                 E-Book Management System
               </Heading>
               <Text color="gray.600" fontSize={{ base: "sm", md: "md" }}>
@@ -455,7 +641,13 @@ export default function AdminEBooksPage() {
                 <>
                   {/* Mobile Card View */}
                   <Box display={{ base: "block", md: "none" }}>
-                    <VStack spacing={0} align="stretch" divider={<Box borderTop="1px solid" borderColor="gray.200" />}>
+                    <VStack
+                      spacing={0}
+                      align="stretch"
+                      divider={
+                        <Box borderTop="1px solid" borderColor="gray.200" />
+                      }
+                    >
                       {categories.map((category) => (
                         <Box
                           key={category.$id}
@@ -464,7 +656,11 @@ export default function AdminEBooksPage() {
                           transition="background 0.2s"
                         >
                           <Flex justify="space-between" align="center">
-                            <Text fontWeight="medium" color="gray.900" fontSize="md">
+                            <Text
+                              fontWeight="medium"
+                              color="gray.900"
+                              fontSize="md"
+                            >
                               {category.name}
                             </Text>
                             <HStack spacing={2}>
@@ -483,7 +679,7 @@ export default function AdminEBooksPage() {
                                 variant="outline"
                                 borderColor="red.300"
                                 color="red.600"
-                                onClick={() => handleCategoryDelete(category.$id)}
+                                onClick={() => handleCategoryDelete(category)}
                               >
                                 <FiTrash2 />
                               </Button>
@@ -496,35 +692,18 @@ export default function AdminEBooksPage() {
 
                   {/* Desktop Table View */}
                   <Box display={{ base: "none", md: "block" }} overflowX="auto">
-                    <table width="100%" style={{ borderCollapse: "collapse" }}>
-                      <thead style={{ backgroundColor: "#F7FAFC" }}>
+                    <table
+                      width="100%"
+                      style={{ borderCollapse: TABLE_STYLES.borderCollapse }}
+                    >
+                      <thead
+                        style={{
+                          backgroundColor: TABLE_HEADER_STYLES.backgroundColor,
+                        }}
+                      >
                         <tr>
-                          <th
-                            style={{
-                              border: "1px solid #E2E8F0",
-                              padding: "16px",
-                              textAlign: "left",
-                              fontWeight: 600,
-                              fontSize: "12px",
-                              textTransform: "uppercase",
-                              color: "#4A5568",
-                            }}
-                          >
-                            Name
-                          </th>
-                          <th
-                            style={{
-                              border: "1px solid #E2E8F0",
-                              padding: "16px",
-                              textAlign: "left",
-                              fontWeight: 600,
-                              fontSize: "12px",
-                              textTransform: "uppercase",
-                              color: "#4A5568",
-                            }}
-                          >
-                            Actions
-                          </th>
+                          <th style={TABLE_HEADER_STYLES}>Name</th>
+                          <th style={TABLE_HEADER_STYLES}>Actions</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -535,29 +714,16 @@ export default function AdminEBooksPage() {
                               transition: "background 0.2s",
                             }}
                             onMouseEnter={(e) => {
-                              e.currentTarget.style.backgroundColor = "#F7FAFC";
+                              e.currentTarget.style.backgroundColor =
+                                TABLE_ROW_HOVER_BG;
                             }}
                             onMouseLeave={(e) => {
                               e.currentTarget.style.backgroundColor =
                                 "transparent";
                             }}
                           >
-                            <td
-                              style={{
-                                border: "1px solid #E2E8F0",
-                                padding: "16px",
-                                color: "#1A202C",
-                                fontWeight: 500,
-                              }}
-                            >
-                              {category.name}
-                            </td>
-                            <td
-                              style={{
-                                border: "1px solid #E2E8F0",
-                                padding: "16px",
-                              }}
-                            >
+                            <td style={TABLE_CELL_STYLES}>{category.name}</td>
+                            <td style={TABLE_CELL_EMPTY_STYLES}>
                               <HStack spacing={2}>
                                 <Button
                                   size="sm"
@@ -577,9 +743,7 @@ export default function AdminEBooksPage() {
                                   variant="outline"
                                   borderColor="red.300"
                                   color="red.600"
-                                  onClick={() =>
-                                    handleCategoryDelete(category.$id)
-                                  }
+                                  onClick={() => handleCategoryDelete(category)}
                                 >
                                   <HStack spacing={1}>
                                     <FiTrash2 />
@@ -594,6 +758,100 @@ export default function AdminEBooksPage() {
                     </table>
                   </Box>
                 </>
+              )}
+
+              {/* Categories Pagination */}
+              {totalCategoryPages > 1 && (
+                <Flex
+                  direction={{ base: "column", md: "row" }}
+                  justify="space-between"
+                  align={{ base: "stretch", md: "center" }}
+                  gap={{ base: 3, md: 0 }}
+                  p={{ base: 3, md: 4 }}
+                  borderTop="1px solid"
+                  borderColor="gray.200"
+                  bg="gray.50"
+                >
+                  <Text
+                    color="gray.600"
+                    fontSize={{ base: "xs", md: "sm" }}
+                    textAlign={{ base: "center", md: "left" }}
+                  >
+                    Showing {(currentCategoryPage - 1) * categoryLimit + 1} to{" "}
+                    {Math.min(
+                      currentCategoryPage * categoryLimit,
+                      totalCategories
+                    )}{" "}
+                    of {totalCategories} categories
+                  </Text>
+                  <HStack
+                    spacing={2}
+                    justify={{ base: "center", md: "flex-end" }}
+                    flexWrap="wrap"
+                  >
+                    <Button
+                      onClick={handleCategoryPreviousPage}
+                      disabled={currentCategoryPage === 1 || categoriesLoading}
+                      borderRadius="none"
+                      variant="outline"
+                      borderColor="gray.300"
+                      color="gray.700"
+                      _hover={{
+                        bg: "gray.100",
+                        borderColor: brandGold,
+                        color: brandGold,
+                      }}
+                      _disabled={{
+                        opacity: 0.5,
+                        cursor: "not-allowed",
+                      }}
+                      size={{ base: "sm", md: "sm" }}
+                    >
+                      <HStack spacing={1}>
+                        <FiChevronLeft />
+                        <Text display={{ base: "none", sm: "block" }}>
+                          Previous
+                        </Text>
+                      </HStack>
+                    </Button>
+                    <Text
+                      color="gray.600"
+                      fontSize={{ base: "xs", md: "sm" }}
+                      px={2}
+                      whiteSpace="nowrap"
+                    >
+                      Page {currentCategoryPage} of {totalCategoryPages}
+                    </Text>
+                    <Button
+                      onClick={handleCategoryNextPage}
+                      disabled={
+                        currentCategoryPage === totalCategoryPages ||
+                        categoriesLoading
+                      }
+                      borderRadius="none"
+                      variant="outline"
+                      borderColor="gray.300"
+                      color="gray.700"
+                      _hover={{
+                        bg: "gray.100",
+                        borderColor: brandGold,
+                        color: brandGold,
+                      }}
+                      _disabled={{
+                        opacity: 0.5,
+                        cursor: "not-allowed",
+                      }}
+                      size={{ base: "sm", md: "sm" }}
+                    >
+                      <HStack spacing={1}>
+                        <Text display={{ base: "none", sm: "block" }}>
+                          Next
+                        </Text>
+                        <FiChevronRight />
+                      </HStack>
+                    </Button>
+                  </HStack>
+                </Flex>
               )}
             </VStack>
           </Box>
@@ -689,7 +947,13 @@ export default function AdminEBooksPage() {
                 <>
                   {/* Mobile Card View */}
                   <Box display={{ base: "block", md: "none" }}>
-                    <VStack spacing={0} align="stretch" divider={<Box borderTop="1px solid" borderColor="gray.200" />}>
+                    <VStack
+                      spacing={0}
+                      align="stretch"
+                      divider={
+                        <Box borderTop="1px solid" borderColor="gray.200" />
+                      }
+                    >
                       {ebooks.map((ebook) => (
                         <Box
                           key={ebook.$id}
@@ -703,20 +967,22 @@ export default function AdminEBooksPage() {
                                 <img
                                   src={getImageUrl(ebook.image)}
                                   alt={ebook.title}
-                                  style={{
-                                    width: "80px",
-                                    height: "80px",
-                                    objectFit: "cover",
-                                    border: "1px solid #E2E8F0",
-                                    flexShrink: 0,
-                                  }}
+                                  style={IMAGE_MOBILE_STYLES}
                                 />
                               )}
                               <VStack align="start" spacing={1} flex={1}>
-                                <Text fontWeight="semibold" color="gray.900" fontSize="md">
+                                <Text
+                                  fontWeight="semibold"
+                                  color="gray.900"
+                                  fontSize="md"
+                                >
                                   {ebook.title}
                                 </Text>
-                                <Text fontSize="lg" fontWeight="bold" color={brandGold}>
+                                <Text
+                                  fontSize="lg"
+                                  fontWeight="bold"
+                                  color={brandGold}
+                                >
                                   ${parseFloat(ebook.price).toFixed(2)}
                                 </Text>
                                 <CategoryBadge categoryId={ebook.categorie} />
@@ -745,9 +1011,7 @@ export default function AdminEBooksPage() {
                                 variant="outline"
                                 borderColor="red.300"
                                 color="red.600"
-                                onClick={() =>
-                                  handleEbookDelete(ebook.$id, ebook.image)
-                                }
+                                onClick={() => handleEbookDelete(ebook)}
                                 flex={1}
                               >
                                 <HStack spacing={1}>
@@ -764,87 +1028,24 @@ export default function AdminEBooksPage() {
 
                   {/* Desktop Table View */}
                   <Box display={{ base: "none", md: "block" }} overflowX="auto">
-                    <table width="100%" style={{ borderCollapse: "collapse" }}>
-                      <thead style={{ backgroundColor: "#F7FAFC" }}>
+                    <table
+                      width="100%"
+                      style={{ borderCollapse: TABLE_STYLES.borderCollapse }}
+                    >
+                      <thead
+                        style={{
+                          backgroundColor: TABLE_HEADER_STYLES.backgroundColor,
+                        }}
+                      >
                         <tr>
-                          <th
-                            style={{
-                              border: "1px solid #E2E8F0",
-                              padding: "16px",
-                              textAlign: "left",
-                              fontWeight: 600,
-                              fontSize: "12px",
-                              textTransform: "uppercase",
-                              color: "#4A5568",
-                            }}
-                          >
-                            Image
-                          </th>
-                          <th
-                            style={{
-                              border: "1px solid #E2E8F0",
-                              padding: "16px",
-                              textAlign: "left",
-                              fontWeight: 600,
-                              fontSize: "12px",
-                              textTransform: "uppercase",
-                              color: "#4A5568",
-                            }}
-                          >
-                            Title
-                          </th>
-                          <th
-                            style={{
-                              border: "1px solid #E2E8F0",
-                              padding: "16px",
-                              textAlign: "left",
-                              fontWeight: 600,
-                              fontSize: "12px",
-                              textTransform: "uppercase",
-                              color: "#4A5568",
-                            }}
-                          >
+                          <th style={TABLE_HEADER_STYLES}>Image</th>
+                          <th style={TABLE_HEADER_STYLES}>Title</th>
+                          {/* <th style={TABLE_HEADER_STYLES}>
                             Description
-                          </th>
-                          <th
-                            style={{
-                              border: "1px solid #E2E8F0",
-                              padding: "16px",
-                              textAlign: "left",
-                              fontWeight: 600,
-                              fontSize: "12px",
-                              textTransform: "uppercase",
-                              color: "#4A5568",
-                            }}
-                          >
-                            Price
-                          </th>
-                          <th
-                            style={{
-                              border: "1px solid #E2E8F0",
-                              padding: "16px",
-                              textAlign: "left",
-                              fontWeight: 600,
-                              fontSize: "12px",
-                              textTransform: "uppercase",
-                              color: "#4A5568",
-                            }}
-                          >
-                            Category
-                          </th>
-                          <th
-                            style={{
-                              border: "1px solid #E2E8F0",
-                              padding: "16px",
-                              textAlign: "left",
-                              fontWeight: 600,
-                              fontSize: "12px",
-                              textTransform: "uppercase",
-                              color: "#4A5568",
-                            }}
-                          >
-                            Actions
-                          </th>
+                          </th> */}
+                          <th style={TABLE_HEADER_STYLES}>Price</th>
+                          <th style={TABLE_HEADER_STYLES}>Category</th>
+                          <th style={TABLE_HEADER_STYLES}>Actions</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -855,78 +1056,38 @@ export default function AdminEBooksPage() {
                               transition: "background 0.2s",
                             }}
                             onMouseEnter={(e) => {
-                              e.currentTarget.style.backgroundColor = "#F7FAFC";
+                              e.currentTarget.style.backgroundColor =
+                                TABLE_ROW_HOVER_BG;
                             }}
                             onMouseLeave={(e) => {
                               e.currentTarget.style.backgroundColor =
                                 "transparent";
                             }}
                           >
-                            <td
-                              style={{
-                                border: "1px solid #E2E8F0",
-                                padding: "16px",
-                              }}
-                            >
+                            <td style={TABLE_CELL_EMPTY_STYLES}>
                               {ebook.image && (
                                 <img
                                   src={getImageUrl(ebook.image)}
                                   alt={ebook.title}
-                                  style={{
-                                    width: "60px",
-                                    height: "60px",
-                                    objectFit: "cover",
-                                    border: "1px solid #E2E8F0",
-                                  }}
+                                  style={IMAGE_TABLE_STYLES}
                                 />
                               )}
                             </td>
-                            <td
-                              style={{
-                                border: "1px solid #E2E8F0",
-                                padding: "16px",
-                                color: "#1A202C",
-                                fontWeight: 500,
-                              }}
-                            >
-                              {ebook.title}
-                            </td>
-                            <td
-                              style={{
-                                border: "1px solid #E2E8F0",
-                                padding: "16px",
-                                color: "#4A5568",
-                                maxWidth: "300px",
-                              }}
-                            >
+                            <td style={TABLE_CELL_STYLES}>{ebook.title}</td>
+                            {/* <td style={{...TABLE_CELL_EMPTY_STYLES, color: "#4A5568", maxWidth: "300px"}}>
                               <Text noOfLines={2} fontSize="sm" color="gray.600">
                                 {ebook.description}
                               </Text>
-                            </td>
+                            </td> */}
                             <td
-                              style={{
-                                border: "1px solid #E2E8F0",
-                                padding: "16px",
-                                color: "#1A202C",
-                                fontWeight: 600,
-                              }}
+                              style={{ ...TABLE_CELL_STYLES, fontWeight: 600 }}
                             >
                               ${parseFloat(ebook.price).toFixed(2)}
                             </td>
-                            <td
-                              style={{
-                                border: "1px solid #E2E8F0",
-                                padding: "16px",
-                              }}
-                            >
+                            <td style={TABLE_CELL_EMPTY_STYLES}>
                               <CategoryBadge categoryId={ebook.categorie} />
                             </td>
-                            <td
-                              style={{
-                                border: "1px solid #E2E8F0",
-                                padding: "16px",
-                              }}
-                            >
+                            <td style={TABLE_CELL_EMPTY_STYLES}>
                               <HStack spacing={2}>
                                 <Button
                                   size="sm"
@@ -946,9 +1107,7 @@ export default function AdminEBooksPage() {
                                   variant="outline"
                                   borderColor="red.300"
                                   color="red.600"
-                                  onClick={() =>
-                                    handleEbookDelete(ebook.$id, ebook.image)
-                                  }
+                                  onClick={() => handleEbookDelete(ebook)}
                                 >
                                   <HStack spacing={1}>
                                     <FiTrash2 />
@@ -963,6 +1122,96 @@ export default function AdminEBooksPage() {
                     </table>
                   </Box>
                 </>
+              )}
+
+              {/* E-Books Pagination */}
+              {totalEbookPages > 1 && (
+                <Flex
+                  direction={{ base: "column", md: "row" }}
+                  justify="space-between"
+                  align={{ base: "stretch", md: "center" }}
+                  gap={{ base: 3, md: 0 }}
+                  p={{ base: 3, md: 4 }}
+                  borderTop="1px solid"
+                  borderColor="gray.200"
+                  bg="gray.50"
+                >
+                  <Text
+                    color="gray.600"
+                    fontSize={{ base: "xs", md: "sm" }}
+                    textAlign={{ base: "center", md: "left" }}
+                  >
+                    Showing {(currentEbookPage - 1) * ebookLimit + 1} to{" "}
+                    {Math.min(currentEbookPage * ebookLimit, totalEbooks)} of{" "}
+                    {totalEbooks} e-books
+                  </Text>
+                  <HStack
+                    spacing={2}
+                    justify={{ base: "center", md: "flex-end" }}
+                    flexWrap="wrap"
+                  >
+                    <Button
+                      onClick={handleEbookPreviousPage}
+                      disabled={currentEbookPage === 1 || ebooksLoading}
+                      borderRadius="none"
+                      variant="outline"
+                      borderColor="gray.300"
+                      color="gray.700"
+                      _hover={{
+                        bg: "gray.100",
+                        borderColor: brandGold,
+                        color: brandGold,
+                      }}
+                      _disabled={{
+                        opacity: 0.5,
+                        cursor: "not-allowed",
+                      }}
+                      size={{ base: "sm", md: "sm" }}
+                    >
+                      <HStack spacing={1}>
+                        <FiChevronLeft />
+                        <Text display={{ base: "none", sm: "block" }}>
+                          Previous
+                        </Text>
+                      </HStack>
+                    </Button>
+                    <Text
+                      color="gray.600"
+                      fontSize={{ base: "xs", md: "sm" }}
+                      px={2}
+                      whiteSpace="nowrap"
+                    >
+                      Page {currentEbookPage} of {totalEbookPages}
+                    </Text>
+                    <Button
+                      onClick={handleEbookNextPage}
+                      disabled={
+                        currentEbookPage === totalEbookPages || ebooksLoading
+                      }
+                      borderRadius="none"
+                      variant="outline"
+                      borderColor="gray.300"
+                      color="gray.700"
+                      _hover={{
+                        bg: "gray.100",
+                        borderColor: brandGold,
+                        color: brandGold,
+                      }}
+                      _disabled={{
+                        opacity: 0.5,
+                        cursor: "not-allowed",
+                      }}
+                      size={{ base: "sm", md: "sm" }}
+                    >
+                      <HStack spacing={1}>
+                        <Text display={{ base: "none", sm: "block" }}>
+                          Next
+                        </Text>
+                        <FiChevronRight />
+                      </HStack>
+                    </Button>
+                  </HStack>
+                </Flex>
               )}
             </VStack>
           </Box>
@@ -1350,6 +1599,161 @@ export default function AdminEBooksPage() {
           </DialogContent>
         </DialogPositioner>
       </DialogRoot>
+
+      {/* Delete Category Confirmation Dialog */}
+      <DialogRoot
+        open={isDeleteCategoryDialogOpen}
+        onOpenChange={({ open }) => {
+          if (!open) {
+            cancelCategoryDelete();
+          }
+        }}
+      >
+        <DialogBackdrop bg="blackAlpha.700" />
+        <DialogPositioner
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+          px={4}
+        >
+          <DialogContent
+            bg="white"
+            borderRadius="none"
+            maxW="md"
+            w="full"
+            position="relative"
+            mx={{ base: 4, md: 0 }}
+          >
+            <DialogCloseTrigger asChild>
+              <CloseButton
+                borderRadius="full"
+                position="absolute"
+                top={4}
+                right={4}
+              />
+            </DialogCloseTrigger>
+            <DialogBody p={6}>
+              <VStack spacing={4} align="stretch">
+                <Heading size="md" color="gray.900">
+                  Delete Category
+                </Heading>
+                <Text color="gray.600" fontSize="md">
+                  Are you sure you want to delete the category{" "}
+                  <Text as="span" fontWeight="semibold" color="gray.900">
+                    "{categoryToDelete?.name}"
+                  </Text>
+                  ? This action cannot be undone.
+                </Text>
+                <HStack spacing={2} justify="flex-end" mt={4}>
+                  <Button
+                    type="button"
+                    onClick={cancelCategoryDelete}
+                    borderRadius="none"
+                    variant="outline"
+                    borderColor="gray.300"
+                  >
+                    <HStack spacing={1}>
+                      <FiX />
+                      <Text>Cancel</Text>
+                    </HStack>
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={confirmCategoryDelete}
+                    borderRadius="none"
+                    bg="red.500"
+                    color="white"
+                    _hover={{ bg: "red.600" }}
+                  >
+                    <HStack spacing={1}>
+                      <FiTrash2 />
+                      <Text>Delete</Text>
+                    </HStack>
+                  </Button>
+                </HStack>
+              </VStack>
+            </DialogBody>
+          </DialogContent>
+        </DialogPositioner>
+      </DialogRoot>
+
+      {/* Delete E-Book Confirmation Dialog */}
+      <DialogRoot
+        open={isDeleteEbookDialogOpen}
+        onOpenChange={({ open }) => {
+          if (!open) {
+            cancelEbookDelete();
+          }
+        }}
+      >
+        <DialogBackdrop bg="blackAlpha.700" />
+        <DialogPositioner
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+          px={4}
+        >
+          <DialogContent
+            bg="white"
+            borderRadius="none"
+            maxW="md"
+            w="full"
+            position="relative"
+            mx={{ base: 4, md: 0 }}
+          >
+            <DialogCloseTrigger asChild>
+              <CloseButton
+                borderRadius="full"
+                position="absolute"
+                top={4}
+                right={4}
+              />
+            </DialogCloseTrigger>
+            <DialogBody p={6}>
+              <VStack spacing={4} align="stretch">
+                <Heading size="md" color="gray.900">
+                  Delete E-Book
+                </Heading>
+                <Text color="gray.600" fontSize="md">
+                  Are you sure you want to delete the e-book{" "}
+                  <Text as="span" fontWeight="semibold" color="gray.900">
+                    "{ebookToDelete?.title}"
+                  </Text>
+                  ? This action cannot be undone and will also delete the
+                  associated image.
+                </Text>
+                <HStack spacing={2} justify="flex-end" mt={4}>
+                  <Button
+                    type="button"
+                    onClick={cancelEbookDelete}
+                    borderRadius="none"
+                    variant="outline"
+                    borderColor="gray.300"
+                  >
+                    <HStack spacing={1}>
+                      <FiX />
+                      <Text>Cancel</Text>
+                    </HStack>
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={confirmEbookDelete}
+                    borderRadius="none"
+                    bg="red.500"
+                    color="white"
+                    _hover={{ bg: "red.600" }}
+                  >
+                    <HStack spacing={1}>
+                      <FiTrash2 />
+                      <Text>Delete</Text>
+                    </HStack>
+                  </Button>
+                </HStack>
+              </VStack>
+            </DialogBody>
+          </DialogContent>
+        </DialogPositioner>
+      </DialogRoot>
     </Box>
   );
 }
@@ -1390,7 +1794,7 @@ function CategorySelect({
       style={{
         width: "100%",
         padding: "8px 12px",
-        border: "1px solid #E2E8F0",
+        border: TABLE_STYLES.border,
         borderRadius: 0,
         fontSize: "16px",
         color: "#000000",
@@ -1404,7 +1808,7 @@ function CategorySelect({
         e.target.style.outline = "none";
       }}
       onBlur={(e) => {
-        e.target.style.borderColor = "#E2E8F0";
+        e.target.style.borderColor = BORDER_COLOR;
         e.target.style.boxShadow = "none";
       }}
     >

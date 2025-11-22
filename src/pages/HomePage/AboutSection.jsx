@@ -7,6 +7,7 @@ import {
   Stack,
   Text,
   chakra,
+  Image,
 } from "@chakra-ui/react";
 import { brandGold } from "../../theme/colors";
 
@@ -27,6 +28,8 @@ const aboutHighlights = [
       "Trusted by athletes across combat sports, sprint disciplines, and team sports to build resilient bodies.",
   },
 ];
+
+import aboutImage from "../../assets/images/about-image.jpg";
 
 export default function AboutSection() {
   return (
@@ -105,7 +108,7 @@ export default function AboutSection() {
             </SimpleGrid>
           </Stack>
 
-          <Box
+          {/* <Box
             flex="1"
             minH={{ base: "14rem", md: "20rem" }}
             w="full"
@@ -120,7 +123,9 @@ export default function AboutSection() {
             fontWeight="medium"
           >
             About Image Placeholder
-          </Box>
+          </Box> */}
+
+          <Image src={aboutImage} alt="About Image" width={500} height={500} />
         </Flex>
       </Container>
     </Box>

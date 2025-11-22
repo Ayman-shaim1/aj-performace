@@ -218,7 +218,10 @@ export const updateAccountPhone = async (phoneNumber, password = null) => {
     if (!phoneClean.startsWith("+")) {
       phoneClean = "+" + phoneClean;
     }
-    const digitsOnly = phoneClean.substring(1).replace(/\D/g, "").substring(0, 15);
+    const digitsOnly = phoneClean
+      .substring(1)
+      .replace(/\D/g, "")
+      .substring(0, 15);
     phoneClean = "+" + digitsOnly;
 
     // Try to update phone in account
@@ -250,7 +253,10 @@ export const updateAccountPhone = async (phoneNumber, password = null) => {
  * @param {string} phoneNumber - Optional phone number to use (overrides user.phone from account)
  * @returns {Promise} Created or existing user document
  */
-export const ensureUserDocument = async (authMethod = "simple", phoneNumber = null) => {
+export const ensureUserDocument = async (
+  authMethod = "simple",
+  phoneNumber = null
+) => {
   try {
     const databaseId = import.meta.env.VITE_APPWRITE_DATABASE_ID;
     const collectionId = "users";
@@ -305,7 +311,12 @@ export const ensureUserDocument = async (authMethod = "simple", phoneNumber = nu
       // If needs update, perform it
       if (needsUpdate) {
         try {
-          await databases.updateDocument(databaseId, collectionId, user.$id, updateData);
+          await databases.updateDocument(
+            databaseId,
+            collectionId,
+            user.$id,
+            updateData
+          );
           // Refresh the document to get updated data
           return await databases.getDocument(
             databaseId,
@@ -411,7 +422,10 @@ export const register = async ({ email, password, fullName, phone }) => {
         phoneClean = "+" + phoneClean;
       }
       // Remove all non-digit characters except the leading +
-      const digitsOnly = phoneClean.substring(1).replace(/\D/g, "").substring(0, 15);
+      const digitsOnly = phoneClean
+        .substring(1)
+        .replace(/\D/g, "")
+        .substring(0, 15);
       phoneClean = "+" + digitsOnly;
     }
 

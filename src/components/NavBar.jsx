@@ -11,11 +11,12 @@ import {
   Box,
   Stack,
   Icon,
+  Image,
 } from "@chakra-ui/react";
 import { Link as RouterLink } from "react-router-dom";
 import { FiMenu } from "react-icons/fi";
 import { AnimatePresence, motion } from "framer-motion";
-import { brandGold } from "../theme/colors";
+import { bgColor, brandGold } from "../theme/colors";
 
 const navLinks = [
   //   { label: "Home", href: "#hero", sectionId: "hero" },
@@ -27,6 +28,7 @@ const navLinks = [
   { label: "Contact", href: "#contact", sectionId: "contact" },
 ];
 const MotionBox = motion(Box);
+import logoImage from "../assets/images/logo_no_bg.png";
 
 export default function NavBar({ isHeroInView = true }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
@@ -80,17 +82,21 @@ export default function NavBar({ isHeroInView = true }) {
         const rect = section.getBoundingClientRect();
         const sectionTop = rect.top + window.scrollY;
         const sectionBottom = sectionTop + rect.height;
-        
+
         // Calculate how much of the section is visible
         const viewportTop = window.scrollY;
         const viewportBottom = window.scrollY + window.innerHeight;
-        
+
         const visibleTop = Math.max(sectionTop, viewportTop);
         const visibleBottom = Math.min(sectionBottom, viewportBottom);
         const visibleHeight = Math.max(0, visibleBottom - visibleTop);
-        
+
         // Check if section is in the viewport and has significant visibility
-        if (visibleHeight > 0 && scrollPosition >= sectionTop - 200 && scrollPosition < sectionBottom) {
+        if (
+          visibleHeight > 0 &&
+          scrollPosition >= sectionTop - 200 &&
+          scrollPosition < sectionBottom
+        ) {
           if (visibleHeight > maxVisible) {
             maxVisible = visibleHeight;
             activeSection = section.id;
@@ -103,9 +109,11 @@ export default function NavBar({ isHeroInView = true }) {
         const sortedSections = [...sectionElements].sort((a, b) => {
           const aTop = a.getBoundingClientRect().top + window.scrollY;
           const bTop = b.getBoundingClientRect().top + window.scrollY;
-          return Math.abs(scrollPosition - aTop) - Math.abs(scrollPosition - bTop);
+          return (
+            Math.abs(scrollPosition - aTop) - Math.abs(scrollPosition - bTop)
+          );
         });
-        
+
         const closest = sortedSections[0];
         const closestTop = closest.getBoundingClientRect().top + window.scrollY;
         if (scrollPosition >= closestTop - 300) {
@@ -168,8 +176,8 @@ export default function NavBar({ isHeroInView = true }) {
     [closeMobileMenu]
   );
 
-  const bg = isHeroInView ? "gray.900" : "white";
-  const textColor = isHeroInView ? "white" : "gray.900";
+  const bg = isHeroInView ? bgColor : "white";
+  const textColor = isHeroInView ? "white" : bgColor;
   const hoverColor = brandGold;
 
   return (
@@ -184,11 +192,12 @@ export default function NavBar({ isHeroInView = true }) {
         px={{ base: 4, md: 8 }}
         py={4}
         bg={bg}
+        height={90}
         color={textColor}
         boxShadow={isHeroInView ? "none" : "sm"}
         transition="background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease"
       >
-        <Heading
+        {/* <Heading
           size={{ base: "lg", md: "xl" }}
           fontWeight="extrabold"
           letterSpacing="wider"
@@ -197,7 +206,9 @@ export default function NavBar({ isHeroInView = true }) {
           color="inherit"
         >
           AJ <chakra.span color={brandGold}>Performance</chakra.span>
-        </Heading>
+        </Heading> */}
+
+        <Image src={logoImage} alt="AJ Performance Logo" width={150} mt={5} />
 
         <HStack
           spacing={6}
@@ -336,28 +347,21 @@ export default function NavBar({ isHeroInView = true }) {
                 size="md"
               />
               <Box mt={4}>
-                <Heading
-                  size="lg"
-                  fontWeight="extrabold"
-                  letterSpacing="widest"
-                  textTransform="uppercase"
-                  lineHeight="1"
-                >
-                  AJ <chakra.span color={brandGold}>Performance</chakra.span>
-                </Heading>
-                <Box
-                  mt={4}
-                  height="1px"
-                  width="100%"
-                  bgGradient="linear(to-r, whiteAlpha.200, whiteAlpha.500, whiteAlpha.200)"
-                />
+                <Box display="flex" justifyContent="center">
+                  <Image
+                    src={logoImage}
+                    alt="AJ Performance Logo"
+                    width={120}
+                    height={55}
+                  />
+                </Box>
               </Box>
               <Stack
                 spacing={5}
                 fontSize="lg"
                 textTransform="uppercase"
                 fontWeight="semibold"
-                mt={8}
+                mt={4}
                 align="flex-start"
               >
                 {navLinks.map((link) => (
